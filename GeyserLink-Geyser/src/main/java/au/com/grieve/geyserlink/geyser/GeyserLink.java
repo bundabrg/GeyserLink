@@ -19,7 +19,6 @@
 package au.com.grieve.geyserlink.geyser;
 
 import com.google.common.collect.Iterables;
-import org.geysermc.connector.GeyserConnector;
 import org.geysermc.connector.event.EventContext;
 import org.geysermc.connector.event.annotations.Event;
 import org.geysermc.connector.event.events.PluginEnableEvent;
@@ -48,14 +47,14 @@ public class GeyserLink extends GeyserPlugin {
     @Event
     public void onEnable(EventContext ctx, PluginEnableEvent event) {
         if (event.getPlugin() == this) {
-            GeyserConnector.getInstance().registerPluginChannel("geyserlink:main");
-            GeyserConnector.getInstance().getGeneralThreadPool().scheduleAtFixedRate(() -> {
-                GeyserSession player = Iterables.getFirst(GeyserConnector.getInstance().getPlayers().values(), null);
+            getConnector().registerPluginChannel("geyserlink:main");
+            getConnector().getGeneralThreadPool().scheduleAtFixedRate(() -> {
+                GeyserSession player = Iterables.getFirst(getConnector().getPlayers().values(), null);
                 if (player == null) {
                     return;
                 }
 
-                GeyserConnector.getInstance().getLogger().warning("Sending ping to player");
+                getLogger().warning("Sending ping to player");
 
                 player.sendPluginMessage("geyserlink:main", String.format("From Geyser: %d", upto++).getBytes());
 
@@ -65,7 +64,7 @@ public class GeyserLink extends GeyserPlugin {
 
     @Event
     public void onPluginMessage(EventContext ctx, PluginMessageEvent event) {
-        GeyserConnector.getInstance().getLogger().warning("Message[" + event.getChannel() + "]: " + new String(event.getData()));
+        getLogger().warning("Message[" + event.getChannel() + "]: " + new String(event.getData()));
     }
 
 }
