@@ -33,10 +33,10 @@ import org.geysermc.connector.plugin.annotations.Plugin;
 import java.util.concurrent.TimeUnit;
 
 @Plugin(
-        name = "EduSupport",
+        name = "GeyserLink",
         version = "1.1.0-dev",
         authors = {"Bundabrg"},
-        description = "Provides protocol support for Minecraft Educational Edition"
+        description = "The Missing Link"
 )
 public class GeyserLink extends GeyserPlugin {
     private int upto = 0;
