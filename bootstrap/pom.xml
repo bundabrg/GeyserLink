@@ -32,19 +32,25 @@
     <dependencies>
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
-            <artifactId>GeyserLink-Bungeecord</artifactId>
+            <artifactId>common</artifactId>
             <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
-            <artifactId>GeyserLink-Geyser</artifactId>
+            <artifactId>bungeecord</artifactId>
             <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
-            <artifactId>GeyserLink-Spigot</artifactId>
+            <artifactId>geyser</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>spigot</artifactId>
             <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
