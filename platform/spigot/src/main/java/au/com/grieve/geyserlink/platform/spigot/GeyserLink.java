@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.spigot;
+package au.com.grieve.geyserlink.platform.spigot;
 
 import com.google.common.collect.Iterables;
 import lombok.Getter;

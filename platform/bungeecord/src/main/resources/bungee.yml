@@ -1,0 +1,4 @@
+name: GeyserLink
+main: au.com.grieve.geyserlink.platform.bungeecord.GeyserLink
+version: 1.1.0-dev
+author: bundabrg

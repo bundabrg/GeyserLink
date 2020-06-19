@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.geyser;
+package au.com.grieve.geyserlink.platform.geyser;
 
 import com.google.common.collect.Iterables;
 import org.geysermc.connector.event.annotations.Event;

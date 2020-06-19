@@ -29,6 +29,15 @@
 
     <artifactId>geyser</artifactId>
 
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
+
     <dependencies>
         <!-- Geyser -->
         <dependency>
