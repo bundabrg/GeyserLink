@@ -18,21 +18,37 @@
 
 package au.com.grieve.geyserlink.platform.bungeecord;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.Iterables;
+import lombok.Getter;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.event.EventHandler;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
+@Getter
 public class GeyserLink extends Plugin implements Listener {
     private int upto = 0;
+    private final File configFile = new File(getDataFolder(), "config.yml");
+    private Configuration localConfig;
 
     @Override
     public void onEnable() {
         super.onEnable();
+
+        // Setup Configuration
+        if (!configFile.exists()) {
+            generateConfig();
+        }
+        loadConfig();
 
         // Register Channels
         getProxy().registerChannel("geyerlink:main");
@@ -50,6 +66,33 @@ public class GeyserLink extends Plugin implements Listener {
             player.getServer().getInfo().sendData("geyserlink:main", String.format("From Bungeecord: %d", upto++).getBytes());
 
         }, 5, 5, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Generate new configuration file
+     */
+    protected void generateConfig() {
+        //noinspection ResultOfMethodCallIgnored
+        configFile.getParentFile().mkdirs();
+
+        try (FileOutputStream fos = new FileOutputStream(configFile);
+             InputStream fis = getResourceAsStream("platform/bungeecord/config.yml")) {
+            fis.transferTo(fos);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Load Configuration
+     */
+    protected void loadConfig() {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        try {
+            localConfig = mapper.readValue(configFile, Configuration.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @EventHandler

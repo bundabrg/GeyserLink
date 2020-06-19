@@ -18,5 +18,13 @@
 
 package au.com.grieve.geyserlink;
 
-public interface IConfiguration {
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Getter;
+
+@Getter
+@JsonIgnoreProperties(ignoreUnknown = true)
+public abstract class Configuration {
+    @JsonProperty("config-version")
+    private int configVersion;
 }

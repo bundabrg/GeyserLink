@@ -18,6 +18,8 @@
 
 package au.com.grieve.geyserlink.platform.spigot;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.Iterables;
 import lombok.Getter;
 import org.bukkit.Bukkit;
@@ -27,11 +29,19 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
+
+@Getter
 public final class GeyserLink extends JavaPlugin implements Listener, PluginMessageListener {
 
-    @Getter
     private static GeyserLink instance;
+
+    private final File configFile = new File(getDataFolder(), "config.yml");
+    private Configuration localConfig;
 
     private int upto = 0;
 
@@ -42,6 +52,12 @@ public final class GeyserLink extends JavaPlugin implements Listener, PluginMess
 
     @Override
     public void onEnable() {
+        // Setup Configuration
+        if (!configFile.exists()) {
+            generateConfig();
+        }
+        loadConfig();
+
         // Register Channels
         getServer().getMessenger().registerOutgoingPluginChannel(this, "geyserlink:main");
         getServer().getMessenger().registerIncomingPluginChannel(this, "geyserlink:main", this);
@@ -58,6 +74,35 @@ public final class GeyserLink extends JavaPlugin implements Listener, PluginMess
 
         }, 10, 200);
 
+    }
+
+    /**
+     * Generate new configuration file
+     */
+    protected void generateConfig() {
+        //noinspection ResultOfMethodCallIgnored
+        configFile.getParentFile().mkdirs();
+
+        try (FileOutputStream fos = new FileOutputStream(configFile);
+             InputStream fis = getResource("platform/spigot/config.yml")) {
+            if (fis != null) {
+                fis.transferTo(fos);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Load Configuration
+     */
+    protected void loadConfig() {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        try {
+            localConfig = mapper.readValue(configFile, Configuration.class);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

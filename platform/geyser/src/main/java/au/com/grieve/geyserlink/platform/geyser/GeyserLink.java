@@ -18,7 +18,10 @@
 
 package au.com.grieve.geyserlink.platform.geyser;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.Iterables;
+import lombok.Getter;
 import org.geysermc.connector.event.annotations.Event;
 import org.geysermc.connector.event.events.PluginEnableEvent;
 import org.geysermc.connector.event.events.PluginMessageEvent;
@@ -28,16 +31,24 @@ import org.geysermc.connector.plugin.PluginClassLoader;
 import org.geysermc.connector.plugin.PluginManager;
 import org.geysermc.connector.plugin.annotations.Plugin;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("unused")
 @Plugin(
         name = "GeyserLink",
         version = "1.1.0-dev",
         authors = {"Bundabrg"},
         description = "The Missing Link"
 )
+@Getter
 public class GeyserLink extends GeyserPlugin {
     private int upto = 0;
+    private final File configFile = new File(getDataFolder(), "config.yml");
+    private Configuration localConfig;
 
     public GeyserLink(PluginManager pluginManager, PluginClassLoader pluginClassLoader) {
         super(pluginManager, pluginClassLoader);
@@ -46,6 +57,12 @@ public class GeyserLink extends GeyserPlugin {
     @Event
     public void onEnable(PluginEnableEvent event) {
         if (event.getPlugin() == this) {
+            // Setup Configuration
+            if (!configFile.exists()) {
+                generateConfig();
+            }
+            loadConfig();
+
             getConnector().registerPluginChannel("geyserlink:main");
             getConnector().getGeneralThreadPool().scheduleAtFixedRate(() -> {
                 GeyserSession player = Iterables.getFirst(getConnector().getPlayers().values(), null);
@@ -58,6 +75,33 @@ public class GeyserLink extends GeyserPlugin {
                 player.sendPluginMessage("geyserlink:main", String.format("From Geyser: %d", upto++).getBytes());
 
             }, 5, 5, TimeUnit.SECONDS);
+        }
+    }
+
+    /**
+     * Generate new configuration file
+     */
+    protected void generateConfig() {
+        //noinspection ResultOfMethodCallIgnored
+        configFile.getParentFile().mkdirs();
+
+        try (FileOutputStream fos = new FileOutputStream(configFile);
+             InputStream fis = getResourceAsStream("platform/geyser/config.yml")) {
+            fis.transferTo(fos);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Load Configuration
+     */
+    protected void loadConfig() {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        try {
+            localConfig = mapper.readValue(configFile, Configuration.class);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
