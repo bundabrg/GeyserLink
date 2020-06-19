@@ -19,7 +19,6 @@
 package au.com.grieve.geyserlink.geyser;
 
 import com.google.common.collect.Iterables;
-import org.geysermc.connector.event.EventContext;
 import org.geysermc.connector.event.annotations.Event;
 import org.geysermc.connector.event.events.PluginEnableEvent;
 import org.geysermc.connector.event.events.PluginMessageEvent;
@@ -45,7 +44,7 @@ public class GeyserLink extends GeyserPlugin {
     }
 
     @Event
-    public void onEnable(EventContext ctx, PluginEnableEvent event) {
+    public void onEnable(PluginEnableEvent event) {
         if (event.getPlugin() == this) {
             getConnector().registerPluginChannel("geyserlink:main");
             getConnector().getGeneralThreadPool().scheduleAtFixedRate(() -> {
@@ -63,7 +62,7 @@ public class GeyserLink extends GeyserPlugin {
     }
 
     @Event
-    public void onPluginMessage(EventContext ctx, PluginMessageEvent event) {
+    public void onPluginMessage(PluginMessageEvent event) {
         getLogger().warning("Message[" + event.getChannel() + "]: " + new String(event.getData()));
     }
 
