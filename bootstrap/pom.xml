@@ -114,6 +114,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <createDependencyReducedPom>true</createDependencyReducedPom>
                     <relocations>
                         <relocation>
                             <pattern>au.com.grieve.bcf</pattern>
@@ -128,5 +129,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
