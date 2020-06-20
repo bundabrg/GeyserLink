@@ -18,27 +18,36 @@
 
 package au.com.grieve.geyserlink.platform.bungeecord;
 
+import au.com.grieve.geyserlink.models.GeyserLinkMessage;
+import au.com.grieve.geyserlink.models.GeyserLinkResponse;
+import au.com.grieve.geyserlink.platform.bungeecord.listeners.MessageListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.Iterables;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import net.md_5.bungee.api.connection.Connection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
-import net.md_5.bungee.api.event.PluginMessageEvent;
-import net.md_5.bungee.api.plugin.Listener;
+import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.plugin.Plugin;
-import net.md_5.bungee.event.EventHandler;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Getter
-public class GeyserLink extends Plugin implements Listener {
-    private int upto = 0;
+public class GeyserLink extends Plugin {
     private final File configFile = new File(getDataFolder(), "config.yml");
     private Configuration localConfig;
+
+    private final AtomicInteger seq = new AtomicInteger();
+
+    private final Map<Integer, MessageResult> responseMap = new ConcurrentHashMap<>();
 
     @Override
     public void onEnable() {
@@ -51,8 +60,7 @@ public class GeyserLink extends Plugin implements Listener {
         loadConfig();
 
         // Register Channels
-        getProxy().registerChannel("geyerlink:main");
-        getProxy().getPluginManager().registerListener(this, this);
+        getProxy().getPluginManager().registerListener(this, new MessageListener(this));
         getProxy().getScheduler().schedule(this, () -> {
 
             ProxiedPlayer player = Iterables.getFirst(getProxy().getPlayers(), null);
@@ -62,8 +70,14 @@ public class GeyserLink extends Plugin implements Listener {
 
             getLogger().warning("Sending ping to player");
 
-            player.sendData("geyserlink:main", String.format("From Bungeecord: %d", upto++).getBytes());
-            player.getServer().getInfo().sendData("geyserlink:main", String.format("From Bungeecord: %d", upto++).getBytes());
+            sendMessage(
+                    player,
+                    "geyserlink:main",
+                    "ping",
+                    new byte[]{(byte) seq.get()}
+            ).onResponse((result, response) -> {
+                getLogger().warning("Got a ping response: " + response);
+            });
 
         }, 5, 5, TimeUnit.SECONDS);
     }
@@ -95,8 +109,70 @@ public class GeyserLink extends Plugin implements Listener {
         }
     }
 
-    @EventHandler
-    public void onPluginMessage(PluginMessageEvent event) {
-        getLogger().warning("Message[" + event.getTag() + "]: " + new String(event.getData()));
+    /**
+     * Create a GeyserLink Message
+     */
+    public MessageResult sendMessage(Connection connection, String channel, String subChannel, byte[] data) {
+        GeyserLinkMessage message = new GeyserLinkMessage(
+                seq.incrementAndGet(),
+                channel,
+                subChannel,
+                data,
+                ""
+        );
+        if (connection instanceof ProxiedPlayer) {
+            ((ProxiedPlayer) connection).sendData("geyserlink:message", message.getBytes());
+        }
+
+        if (connection instanceof Server) {
+            ((Server) connection).getInfo().sendData("geyserlink:message", message.getBytes());
+        }
+        return new MessageResult(this, connection, message);
     }
+
+    /**
+     * Create a GeyserLink Response
+     */
+    public void sendResponse(Connection connection, GeyserLinkMessage message, byte[] data) {
+        GeyserLinkResponse response = new GeyserLinkResponse(
+                message.getId(),
+                data,
+                ""
+        );
+
+        if (connection instanceof ProxiedPlayer) {
+            ((ProxiedPlayer) connection).sendData("geyserlink:response", response.getBytes());
+        }
+
+        if (connection instanceof Server) {
+            ((Server) connection).getInfo().sendData("geyserlink:response", response.getBytes());
+        }
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class MessageResult {
+        private final GeyserLink plugin;
+        private final Connection connection;
+        private final GeyserLinkMessage message;
+        private Runnable runnable;
+
+        MessageResult onResponse(Runnable runnable, long timeout) {
+            this.runnable = runnable;
+            plugin.getResponseMap().put(message.getId(), this);
+
+            // Clean up after a timeout
+            plugin.getProxy().getScheduler().schedule(plugin, () -> plugin.getResponseMap().remove(message.getId()), timeout, TimeUnit.SECONDS);
+            return this;
+        }
+
+        MessageResult onResponse(Runnable runnable) {
+            return onResponse(runnable, 300);
+        }
+
+        public interface Runnable {
+            void run(MessageResult result, GeyserLinkResponse response);
+        }
+    }
+
 }

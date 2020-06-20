@@ -18,32 +18,36 @@
 
 package au.com.grieve.geyserlink.platform.spigot;
 
+import au.com.grieve.geyserlink.models.GeyserLinkMessage;
+import au.com.grieve.geyserlink.models.GeyserLinkResponse;
+import au.com.grieve.geyserlink.platform.spigot.listeners.MessageListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.Iterables;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.plugin.messaging.PluginMessageListener;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 @Getter
-public final class GeyserLink extends JavaPlugin implements Listener, PluginMessageListener {
-
+public final class GeyserLink extends JavaPlugin {
     private static GeyserLink instance;
+    private final AtomicInteger seq = new AtomicInteger();
+
+    private final Map<Integer, MessageResult> responseMap = new ConcurrentHashMap<>();
 
     private final File configFile = new File(getDataFolder(), "config.yml");
     private Configuration localConfig;
-
-    private int upto = 0;
 
     public GeyserLink() {
         super();
@@ -58,9 +62,9 @@ public final class GeyserLink extends JavaPlugin implements Listener, PluginMess
         }
         loadConfig();
 
-        // Register Channels
-        getServer().getMessenger().registerOutgoingPluginChannel(this, "geyserlink:main");
-        getServer().getMessenger().registerIncomingPluginChannel(this, "geyserlink:main", this);
+        // Register Listeners
+        getServer().getPluginManager().registerEvents(new MessageListener(this), this);
+
 
         getServer().getScheduler().runTaskTimer(this, () -> {
             Player player = Iterables.getFirst(Bukkit.getOnlinePlayers(), null);
@@ -70,9 +74,16 @@ public final class GeyserLink extends JavaPlugin implements Listener, PluginMess
 
             getLogger().warning("Sending ping to player");
 
-            player.sendPluginMessage(this, "geyserlink:main", String.format("From Spigot: %d", upto++).getBytes());
+            sendMessage(
+                    player,
+                    "geyserlink:main",
+                    "ping",
+                    new byte[]{(byte) seq.get()}
+            ).onResponse((result, response) -> {
+                getLogger().warning("Got a ping response: " + response);
+            });
 
-        }, 10, 200);
+        }, 5, 5 * 20);
 
     }
 
@@ -105,8 +116,55 @@ public final class GeyserLink extends JavaPlugin implements Listener, PluginMess
         }
     }
 
-    @Override
-    public void onPluginMessageReceived(@NotNull String channel, @NotNull Player player, @NotNull byte[] bytes) {
-        getLogger().warning("Message[" + channel + "]: " + new String(bytes));
+    /**
+     * Create a GeyserLink Message
+     */
+    public MessageResult sendMessage(Player player, String channel, String subChannel, byte[] data) {
+        GeyserLinkMessage message = new GeyserLinkMessage(
+                seq.incrementAndGet(),
+                channel,
+                subChannel,
+                data,
+                ""
+        );
+        player.sendPluginMessage(this, "geyserlink:message", message.getBytes());
+        return new MessageResult(this, player, message);
+    }
+
+    /**
+     * Create a GeyserLink Response
+     */
+    public void sendResponse(Player player, GeyserLinkMessage message, byte[] data) {
+        player.sendPluginMessage(this, "geyserlink:response", new GeyserLinkResponse(
+                message.getId(),
+                data,
+                ""
+        ).getBytes());
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class MessageResult {
+        private final GeyserLink plugin;
+        private final Player player;
+        private final GeyserLinkMessage message;
+        private Runnable runnable;
+
+        MessageResult onResponse(Runnable runnable, long timeout) {
+            this.runnable = runnable;
+            plugin.getResponseMap().put(message.getId(), this);
+
+            // Clean up after a timeout
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.getResponseMap().remove(message.getId()), timeout * 20);
+            return this;
+        }
+
+        MessageResult onResponse(Runnable runnable) {
+            return onResponse(runnable, 300);
+        }
+
+        public interface Runnable {
+            void run(MessageResult result, GeyserLinkResponse response);
+        }
     }
 }
