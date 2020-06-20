@@ -43,12 +43,12 @@ public class MessageListener implements Listener {
         switch (event.getTag()) {
             case "geyserlink:message":
                 plugin.getProxy().getPluginManager().callEvent(
-                        new GeyserLinkMessageEvent(event.getReceiver(), GeyserLinkMessage.fromBytes(event.getData()))
+                        new GeyserLinkMessageEvent(event.getSender(), GeyserLinkMessage.fromBytes(event.getData()))
                 );
                 break;
             case "geyserlink:response":
                 plugin.getProxy().getPluginManager().callEvent(
-                        new GeyserLinkResponseEvent(event.getReceiver(), GeyserLinkResponse.fromBytes(event.getData())));
+                        new GeyserLinkResponseEvent(event.getSender(), GeyserLinkResponse.fromBytes(event.getData())));
                 break;
         }
     }
@@ -78,9 +78,12 @@ public class MessageListener implements Listener {
      */
     @EventHandler
     public void onGeyserLinkResponse(GeyserLinkResponseEvent event) {
-        GeyserLink.MessageResult result = plugin.getResponseMap().get(event.getResponse().getId());
-        if (result != null) {
-            result.getRunnable().run(result, event.getResponse());
+        if (!event.getResponse().getTarget().equals(GeyserLink.SOURCE)) {
+            return;
+        }
+
+        if (plugin.getResponseMap().containsKey(event.getResponse().getId())) {
+            plugin.getResponseMap().get(event.getResponse().getId()).run(event.getResponse());
         }
     }
 }

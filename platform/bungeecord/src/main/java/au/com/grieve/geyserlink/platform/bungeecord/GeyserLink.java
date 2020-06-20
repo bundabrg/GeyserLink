@@ -30,6 +30,7 @@ import net.md_5.bungee.api.connection.Connection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.connection.Server;
 import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.api.scheduler.ScheduledTask;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,16 +43,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Getter
 public class GeyserLink extends Plugin {
+    public static final String SOURCE = "bungeecord";
+    public static GeyserLink INSTANCE;
     private final File configFile = new File(getDataFolder(), "config.yml");
     private Configuration localConfig;
 
     private final AtomicInteger seq = new AtomicInteger();
-
-    private final Map<Integer, MessageResult> responseMap = new ConcurrentHashMap<>();
+    private final Map<Integer, MessageResult.ResponseRunnable> responseMap = new ConcurrentHashMap<>();
 
     @Override
     public void onEnable() {
         super.onEnable();
+
+        INSTANCE = this;
 
         // Setup Configuration
         if (!configFile.exists()) {
@@ -115,6 +119,7 @@ public class GeyserLink extends Plugin {
     public MessageResult sendMessage(Connection connection, String channel, String subChannel, byte[] data) {
         GeyserLinkMessage message = new GeyserLinkMessage(
                 seq.incrementAndGet(),
+                SOURCE,
                 channel,
                 subChannel,
                 data,
@@ -136,6 +141,8 @@ public class GeyserLink extends Plugin {
     public void sendResponse(Connection connection, GeyserLinkMessage message, byte[] data) {
         GeyserLinkResponse response = new GeyserLinkResponse(
                 message.getId(),
+                SOURCE,
+                message.getSource(),
                 data,
                 ""
         );
@@ -155,23 +162,35 @@ public class GeyserLink extends Plugin {
         private final GeyserLink plugin;
         private final Connection connection;
         private final GeyserLinkMessage message;
-        private Runnable runnable;
 
-        MessageResult onResponse(Runnable runnable, long timeout) {
-            this.runnable = runnable;
-            plugin.getResponseMap().put(message.getId(), this);
-
+        MessageResult onResponse(Runnable runnable, long timeout, long expiry) {
             // Clean up after a timeout
-            plugin.getProxy().getScheduler().schedule(plugin, () -> plugin.getResponseMap().remove(message.getId()), timeout, TimeUnit.SECONDS);
+            ScheduledTask timeoutTask = plugin.getProxy().getScheduler().schedule(plugin, () -> plugin.getResponseMap().remove(message.getId()), timeout, TimeUnit.SECONDS);
+
+            plugin.getResponseMap().put(message.getId(), (response) -> {
+                // Cancel cleanup
+                timeoutTask.cancel();
+
+                // Set expiry
+                plugin.getProxy().getScheduler().schedule(plugin, () -> plugin.getResponseMap().remove(message.getId()), expiry, TimeUnit.SECONDS);
+
+                // Execute
+                runnable.run(this, response);
+            });
+
             return this;
         }
 
         MessageResult onResponse(Runnable runnable) {
-            return onResponse(runnable, 300);
+            return onResponse(runnable, 300, 30);
         }
 
         public interface Runnable {
             void run(MessageResult result, GeyserLinkResponse response);
+        }
+
+        public interface ResponseRunnable {
+            void run(GeyserLinkResponse response);
         }
     }
 

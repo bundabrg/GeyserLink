@@ -76,9 +76,12 @@ public class MessageListener {
      */
     @Event
     public void onGeyserLinkResponse(GeyserLinkResponseEvent event) {
-        GeyserLink.MessageResult result = plugin.getResponseMap().get(event.getResponse().getId());
-        if (result != null) {
-            result.getRunnable().run(result, event.getResponse());
+        if (!event.getResponse().getTarget().equals(GeyserLink.SOURCE)) {
+            return;
+        }
+
+        if (plugin.getResponseMap().containsKey(event.getResponse().getId())) {
+            plugin.getResponseMap().get(event.getResponse().getId()).run(event.getResponse());
         }
     }
 

@@ -34,6 +34,8 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class GeyserLinkResponse implements Serializable {
     private final int id;
+    private final String source;
+    private final String target;
     private final byte[] payload;
     private final String signature;
 
@@ -43,7 +45,7 @@ public class GeyserLinkResponse implements Serializable {
         try {
             return (GeyserLinkResponse) new ObjectInputStream(new ByteArrayInputStream(buffer)).readObject();
         } catch (IOException | ClassNotFoundException e) {
-            return new GeyserLinkResponse(-1, new byte[]{}, "");
+            return new GeyserLinkResponse(-1, "unknown", "unknown", new byte[]{}, "");
         }
     }
 

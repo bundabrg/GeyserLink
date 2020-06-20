@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -52,14 +53,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 )
 @Getter
 public class GeyserLink extends GeyserPlugin {
+    public static final String SOURCE = "geyser";
+    public static GeyserLink INSTANCE;
     private final AtomicInteger seq = new AtomicInteger();
     private final File configFile = new File(getDataFolder(), "config.yml");
     private Configuration localConfig;
-
-    private final Map<Integer, MessageResult> responseMap = new ConcurrentHashMap<>();
+    private final Map<Integer, MessageResult.ResponseRunnable> responseMap = new ConcurrentHashMap<>();
 
     public GeyserLink(PluginManager pluginManager, PluginClassLoader pluginClassLoader) {
         super(pluginManager, pluginClassLoader);
+
+        INSTANCE = this;
     }
 
     @Event
@@ -128,6 +132,7 @@ public class GeyserLink extends GeyserPlugin {
     public MessageResult sendMessage(GeyserSession session, String channel, String subChannel, byte[] data) {
         GeyserLinkMessage message = new GeyserLinkMessage(
                 seq.incrementAndGet(),
+                SOURCE,
                 channel,
                 subChannel,
                 data,
@@ -143,6 +148,8 @@ public class GeyserLink extends GeyserPlugin {
     public void sendResponse(GeyserSession session, GeyserLinkMessage message, byte[] data) {
         session.sendPluginMessage("geyserlink:response", new GeyserLinkResponse(
                 message.getId(),
+                SOURCE,
+                message.getSource(),
                 data,
                 ""
         ).getBytes());
@@ -154,25 +161,35 @@ public class GeyserLink extends GeyserPlugin {
         private final GeyserLink plugin;
         private final GeyserSession session;
         private final GeyserLinkMessage message;
-        private Runnable runnable;
 
-        MessageResult onResponse(Runnable runnable, long timeout) {
-            this.runnable = runnable;
-            plugin.getResponseMap().put(message.getId(), this);
-
+        MessageResult onResponse(Runnable runnable, long timeout, long expiry) {
             // Clean up after a timeout
-            plugin.getConnector().getGeneralThreadPool().schedule(() -> {
-                plugin.getResponseMap().remove(message.getId());
-            }, timeout, TimeUnit.SECONDS);
+            ScheduledFuture<?> timeoutTask = plugin.getConnector().getGeneralThreadPool().schedule(() -> plugin.getResponseMap().remove(message.getId()), timeout, TimeUnit.SECONDS);
+
+            plugin.getResponseMap().put(message.getId(), (response) -> {
+                // Cancel cleanup
+                timeoutTask.cancel(false);
+
+                // Set expiry
+                plugin.getConnector().getGeneralThreadPool().schedule(() -> plugin.getResponseMap().remove(message.getId()), expiry, TimeUnit.SECONDS);
+
+                // Execute
+                runnable.run(this, response);
+            });
+
             return this;
         }
 
         MessageResult onResponse(Runnable runnable) {
-            return onResponse(runnable, 300);
+            return onResponse(runnable, 300, 30);
         }
 
         public interface Runnable {
             void run(MessageResult result, GeyserLinkResponse response);
+        }
+
+        public interface ResponseRunnable {
+            void run(GeyserLinkResponse response);
         }
     }
 }

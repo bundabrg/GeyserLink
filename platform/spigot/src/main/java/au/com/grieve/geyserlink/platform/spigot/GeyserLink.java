@@ -29,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -41,17 +42,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Getter
 public final class GeyserLink extends JavaPlugin {
-    private static GeyserLink instance;
-    private final AtomicInteger seq = new AtomicInteger();
+    public static final String SOURCE = "spigot";
+    private static GeyserLink INSTANCE;
 
-    private final Map<Integer, MessageResult> responseMap = new ConcurrentHashMap<>();
+    private final AtomicInteger seq = new AtomicInteger();
+    private final Map<Integer, MessageResult.ResponseRunnable> responseMap = new ConcurrentHashMap<>();
 
     private final File configFile = new File(getDataFolder(), "config.yml");
     private Configuration localConfig;
 
     public GeyserLink() {
         super();
-        instance = this;
+        INSTANCE = this;
     }
 
     @Override
@@ -122,6 +124,7 @@ public final class GeyserLink extends JavaPlugin {
     public MessageResult sendMessage(Player player, String channel, String subChannel, byte[] data) {
         GeyserLinkMessage message = new GeyserLinkMessage(
                 seq.incrementAndGet(),
+                SOURCE,
                 channel,
                 subChannel,
                 data,
@@ -137,6 +140,8 @@ public final class GeyserLink extends JavaPlugin {
     public void sendResponse(Player player, GeyserLinkMessage message, byte[] data) {
         player.sendPluginMessage(this, "geyserlink:response", new GeyserLinkResponse(
                 message.getId(),
+                SOURCE,
+                message.getSource(),
                 data,
                 ""
         ).getBytes());
@@ -148,23 +153,39 @@ public final class GeyserLink extends JavaPlugin {
         private final GeyserLink plugin;
         private final Player player;
         private final GeyserLinkMessage message;
-        private Runnable runnable;
 
-        MessageResult onResponse(Runnable runnable, long timeout) {
-            this.runnable = runnable;
-            plugin.getResponseMap().put(message.getId(), this);
+        MessageResult onResponse(Runnable runnable, long timeout, long expiry) {
 
             // Clean up after a timeout
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.getResponseMap().remove(message.getId()), timeout * 20);
+
+            // Clean up after a timeout
+            BukkitTask timeoutTask = plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.getResponseMap().remove(message.getId()), timeout * 20);
+
+            plugin.getResponseMap().put(message.getId(), (response) -> {
+                // Cancel cleanup
+                timeoutTask.cancel();
+
+                // Set expiry
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> plugin.getResponseMap().remove(message.getId()), expiry * 20);
+
+                // Execute
+                runnable.run(this, response);
+            });
+
             return this;
         }
 
         MessageResult onResponse(Runnable runnable) {
-            return onResponse(runnable, 300);
+            return onResponse(runnable, 300, 30);
         }
 
         public interface Runnable {
             void run(MessageResult result, GeyserLinkResponse response);
+        }
+
+        public interface ResponseRunnable {
+            void run(GeyserLinkResponse response);
         }
     }
 }
