@@ -18,23 +18,36 @@
 
 package au.com.grieve.geyserlink.models;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
+import lombok.Getter;
 import lombok.ToString;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
+@SuppressWarnings("unchecked")
 @EqualsAndHashCode(callSuper = true)
-@Data
 @ToString
-@RequiredArgsConstructor
+@Getter
 public class GeyserLinkSignedMessage<T extends BaseMessage> extends BaseMessage {
     private final byte[] payload;
     private final String signature;
-    private transient T message;
+    private transient final T message;
+
+    public GeyserLinkSignedMessage(byte[] payload, String signature) {
+        T message1;
+        this.payload = payload;
+        this.signature = signature;
+
+        T m = null;
+        try {
+            m = (T) new ObjectInputStream(new ByteArrayInputStream(payload)).readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        message = m;
+    }
 
     @SuppressWarnings("unchecked")
     public static <T extends BaseMessage> GeyserLinkSignedMessage<T> fromBytes(byte[] buffer) {
@@ -47,17 +60,5 @@ public class GeyserLinkSignedMessage<T extends BaseMessage> extends BaseMessage 
 
     public static <T extends BaseMessage> GeyserLinkSignedMessage<T> sign(T message, String key) {
         return new GeyserLinkSignedMessage<>(message.getBytes(), "");
-    }
-
-    @SuppressWarnings("unchecked")
-    public T getMessage() {
-        if (message == null) {
-            try {
-                message = (T) new ObjectInputStream(new ByteArrayInputStream(payload)).readObject();
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        }
-        return message;
     }
 }
