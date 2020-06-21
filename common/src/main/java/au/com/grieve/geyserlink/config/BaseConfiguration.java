@@ -16,18 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink;
+package au.com.grieve.geyserlink.config;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
-@Getter
-@JsonIgnoreProperties(ignoreUnknown = true)
-public abstract class Configuration {
-    @JsonProperty("config-version")
-    private int configVersion;
+import java.io.File;
+import java.io.IOException;
 
-    @JsonProperty("private-key")
-    private String privateKey = null;
+public abstract class BaseConfiguration {
+    public void saveToFile(File configFile) {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory()
+                .disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER)
+        );
+        try {
+            mapper.writeValue(configFile, this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

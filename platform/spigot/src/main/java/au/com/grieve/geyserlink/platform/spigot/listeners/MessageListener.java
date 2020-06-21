@@ -28,6 +28,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.messaging.PluginMessageListener;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("unused")
 public class MessageListener implements Listener, PluginMessageListener {
     private final GeyserLink plugin;
 
@@ -80,7 +81,7 @@ public class MessageListener implements Listener, PluginMessageListener {
      */
     @EventHandler
     public void onGeyserLinkResponse(GeyserLinkResponseEvent event) {
-        if (!event.getResponse().getTarget().equals(GeyserLink.SOURCE)) {
+        if (!event.getResponse().getRecipient().equals(plugin.getUuid())) {
             return;
         }
 

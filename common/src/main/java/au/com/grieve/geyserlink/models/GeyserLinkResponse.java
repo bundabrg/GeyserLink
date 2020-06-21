@@ -26,22 +26,25 @@ import lombok.ToString;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @ToString
 @RequiredArgsConstructor
 public class GeyserLinkResponse extends BaseMessage {
+    public static final GeyserLinkResponse EMPTY = new GeyserLinkResponse(-1, UUID.randomUUID(), UUID.randomUUID(), new byte[]{});
+
     private final int id;
-    private final String source;
-    private final String target;
+    private final UUID sender;
+    private final UUID recipient;
     private final byte[] payload;
 
     public static GeyserLinkResponse fromBytes(byte[] buffer) {
         try {
             return (GeyserLinkResponse) new ObjectInputStream(new ByteArrayInputStream(buffer)).readObject();
         } catch (IOException | ClassNotFoundException e) {
-            return null;
+            return EMPTY;
         }
     }
 }

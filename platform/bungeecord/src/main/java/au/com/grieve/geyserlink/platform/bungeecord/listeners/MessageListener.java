@@ -26,6 +26,7 @@ import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
+@SuppressWarnings("unused")
 public class MessageListener implements Listener {
     private final GeyserLink plugin;
 
@@ -76,7 +77,7 @@ public class MessageListener implements Listener {
      */
     @EventHandler
     public void onGeyserLinkResponse(GeyserLinkResponseEvent event) {
-        if (!event.getResponse().getTarget().equals(GeyserLink.SOURCE)) {
+        if (!event.getResponse().getRecipient().equals(plugin.getUuid())) {
             return;
         }
 

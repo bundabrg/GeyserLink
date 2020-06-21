@@ -18,12 +18,13 @@
 
 package au.com.grieve.geyserlink.platform.spigot;
 
+import au.com.grieve.geyserlink.EncryptionUtils;
+import au.com.grieve.geyserlink.config.Configuration;
+import au.com.grieve.geyserlink.config.Dynamic;
 import au.com.grieve.geyserlink.models.GeyserLinkMessage;
 import au.com.grieve.geyserlink.models.GeyserLinkResponse;
 import au.com.grieve.geyserlink.models.GeyserLinkSignedMessage;
 import au.com.grieve.geyserlink.platform.spigot.listeners.MessageListener;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.Iterables;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -36,21 +37,25 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.KeyPair;
+import java.util.Base64;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
 @Getter
 public final class GeyserLink extends JavaPlugin {
-    public static final String SOURCE = "spigot";
     private static GeyserLink INSTANCE;
 
+    private final File configFile = new File(getDataFolder(), "config.yml");
+    private final File dynamicFile = new File(getDataFolder(), "dynamic.yml");
+    private Configuration localConfig;
     private final AtomicInteger seq = new AtomicInteger();
     private final Map<Integer, MessageResult.ResponseRunnable> responseMap = new ConcurrentHashMap<>();
-
-    private final File configFile = new File(getDataFolder(), "config.yml");
-    private Configuration localConfig;
+    private Dynamic dynamicConfig;
+    private KeyPair keyPair;
 
     public GeyserLink() {
         super();
@@ -63,7 +68,23 @@ public final class GeyserLink extends JavaPlugin {
         if (!configFile.exists()) {
             generateConfig();
         }
-        loadConfig();
+        localConfig = Configuration.loadFromFile(configFile);
+        dynamicConfig = Dynamic.loadFromFile(dynamicFile);
+
+        // If we have no public key we generate it now
+        if (dynamicConfig.getConfig() == null || dynamicConfig.getConfig().getPrivateKey() == null) {
+            getLogger().info("Generating new Public/Private Key");
+            keyPair = EncryptionUtils.generateKeyPair();
+            if (keyPair != null) {
+                dynamicConfig.getConfig().setPublicKey(Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded()));
+                dynamicConfig.getConfig().setPrivateKey(Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded()));
+                dynamicConfig.saveToFile(dynamicFile);
+            }
+        } else {
+            keyPair = EncryptionUtils.generateKeyPair(
+                    Base64.getDecoder().decode(dynamicConfig.getConfig().getPublicKey()),
+                    Base64.getDecoder().decode(dynamicConfig.getConfig().getPrivateKey()));
+        }
 
         // Register Listeners
         getServer().getPluginManager().registerEvents(new MessageListener(this), this);
@@ -107,16 +128,8 @@ public final class GeyserLink extends JavaPlugin {
         }
     }
 
-    /**
-     * Load Configuration
-     */
-    protected void loadConfig() {
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        try {
-            localConfig = mapper.readValue(configFile, Configuration.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public UUID getUuid() {
+        return UUID.nameUUIDFromBytes(keyPair.getPublic().getEncoded());
     }
 
     /**
@@ -125,12 +138,12 @@ public final class GeyserLink extends JavaPlugin {
     public MessageResult sendMessage(Player player, String channel, String subChannel, byte[] data) {
         GeyserLinkMessage message = new GeyserLinkMessage(
                 seq.incrementAndGet(),
-                SOURCE,
+                getUuid(),
                 channel,
                 subChannel,
                 data
         );
-        player.sendPluginMessage(this, "geyserlink:message", GeyserLinkSignedMessage.sign(message, "").getBytes());
+        player.sendPluginMessage(this, "geyserlink:message", GeyserLinkSignedMessage.sign(message, keyPair.getPrivate()).getBytes());
         return new MessageResult(this, player, message);
     }
 
@@ -140,14 +153,15 @@ public final class GeyserLink extends JavaPlugin {
     public void sendResponse(Player player, GeyserLinkMessage message, byte[] data) {
         GeyserLinkResponse response = new GeyserLinkResponse(
                 message.getId(),
-                SOURCE,
-                message.getSource(),
+                getUuid(),
+                message.getSender(),
                 data
         );
 
-        player.sendPluginMessage(this, "geyserlink:response", GeyserLinkSignedMessage.sign(response, "").getBytes());
+        player.sendPluginMessage(this, "geyserlink:response", GeyserLinkSignedMessage.sign(response, keyPair.getPrivate()).getBytes());
     }
 
+    @SuppressWarnings({"SameParameterValue", "UnusedReturnValue"})
     @Getter
     @RequiredArgsConstructor
     public static class MessageResult {

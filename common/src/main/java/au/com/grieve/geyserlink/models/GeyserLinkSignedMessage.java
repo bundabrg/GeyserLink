@@ -25,6 +25,11 @@ import lombok.ToString;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.Signature;
+import java.security.SignatureException;
 
 @SuppressWarnings("unchecked")
 @EqualsAndHashCode(callSuper = true)
@@ -32,21 +37,29 @@ import java.io.ObjectInputStream;
 @Getter
 public class GeyserLinkSignedMessage<T extends BaseMessage> extends BaseMessage {
     private final byte[] payload;
-    private final String signature;
-    private transient final T message;
+    private final byte[] signature;
+    private transient T message;
 
-    public GeyserLinkSignedMessage(byte[] payload, String signature) {
-        T message1;
+    public GeyserLinkSignedMessage(byte[] payload, byte[] signature) {
         this.payload = payload;
         this.signature = signature;
+    }
 
-        T m = null;
+    public static <T extends BaseMessage> GeyserLinkSignedMessage<T> sign(T message, PrivateKey key) {
+        byte[] messageBytes = message.getBytes();
+        byte[] signature = null;
+
         try {
-            m = (T) new ObjectInputStream(new ByteArrayInputStream(payload)).readObject();
-        } catch (IOException | ClassNotFoundException e) {
+            Signature sign;
+            sign = Signature.getInstance("SHA256withRSA");
+            sign.initSign(key);
+            sign.update(messageBytes);
+            signature = sign.sign();
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
             e.printStackTrace();
         }
-        message = m;
+
+        return new GeyserLinkSignedMessage<>(messageBytes, signature);
     }
 
     @SuppressWarnings("unchecked")
@@ -58,7 +71,14 @@ public class GeyserLinkSignedMessage<T extends BaseMessage> extends BaseMessage 
         }
     }
 
-    public static <T extends BaseMessage> GeyserLinkSignedMessage<T> sign(T message, String key) {
-        return new GeyserLinkSignedMessage<>(message.getBytes(), "");
+    public T getMessage() {
+        if (message == null) {
+            try {
+                message = (T) new ObjectInputStream(new ByteArrayInputStream(payload)).readObject();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return message;
     }
 }

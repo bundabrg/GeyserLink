@@ -16,38 +16,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.models;
+package au.com.grieve.geyserlink.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 
-import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.util.UUID;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@ToString
-@RequiredArgsConstructor
-public class GeyserLinkMessage extends BaseMessage {
-    public static final GeyserLinkMessage EMPTY = new GeyserLinkMessage(-1, UUID.randomUUID(), "", "", new byte[]{});
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Configuration extends BaseConfiguration {
+    private int version = 1;
 
-    private final int id;
-    private final UUID sender;
-    private final String channel;
-    private final String subChannel;
-    private final byte[] payload;
-
-    public static GeyserLinkMessage fromBytes(byte[] buffer) {
-        GeyserLinkMessage message;
-
+    public static Configuration loadFromFile(File configFile) {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         try {
-            return (GeyserLinkMessage) new ObjectInputStream(new ByteArrayInputStream(buffer)).readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            return EMPTY;
+            return mapper.readValue(configFile, Configuration.class);
+        } catch (IOException e) {
+            return new Configuration();
         }
     }
+
 }

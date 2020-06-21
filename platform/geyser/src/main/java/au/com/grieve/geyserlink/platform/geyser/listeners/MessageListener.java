@@ -26,6 +26,7 @@ import org.geysermc.connector.event.annotations.Event;
 import org.geysermc.connector.event.events.PluginMessageEvent;
 
 
+@SuppressWarnings("unused")
 public class MessageListener {
     private final GeyserLink plugin;
 
@@ -75,7 +76,7 @@ public class MessageListener {
      */
     @Event
     public void onGeyserLinkResponse(GeyserLinkResponseEvent event) {
-        if (!event.getResponse().getTarget().equals(GeyserLink.SOURCE)) {
+        if (!event.getResponse().getRecipient().equals(plugin.getUuid())) {
             return;
         }
 
