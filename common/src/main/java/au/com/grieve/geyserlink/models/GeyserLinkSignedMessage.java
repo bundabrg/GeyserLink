@@ -31,17 +31,33 @@ import java.io.ObjectInputStream;
 @Data
 @ToString
 @RequiredArgsConstructor
-public class GeyserLinkResponse extends BaseMessage {
-    private final int id;
-    private final String source;
-    private final String target;
+public class GeyserLinkSignedMessage<T extends BaseMessage> extends BaseMessage {
     private final byte[] payload;
+    private final String signature;
+    private transient T message;
 
-    public static GeyserLinkResponse fromBytes(byte[] buffer) {
+    @SuppressWarnings("unchecked")
+    public static <T extends BaseMessage> GeyserLinkSignedMessage<T> fromBytes(byte[] buffer) {
         try {
-            return (GeyserLinkResponse) new ObjectInputStream(new ByteArrayInputStream(buffer)).readObject();
+            return (GeyserLinkSignedMessage<T>) new ObjectInputStream(new ByteArrayInputStream(buffer)).readObject();
         } catch (IOException | ClassNotFoundException e) {
             return null;
         }
+    }
+
+    public static <T extends BaseMessage> GeyserLinkSignedMessage<T> sign(T message, String key) {
+        return new GeyserLinkSignedMessage<>(message.getBytes(), "");
+    }
+
+    @SuppressWarnings("unchecked")
+    public T getMessage() {
+        if (message == null) {
+            try {
+                message = (T) new ObjectInputStream(new ByteArrayInputStream(payload)).readObject();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return message;
     }
 }

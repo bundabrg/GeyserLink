@@ -18,8 +18,7 @@
 
 package au.com.grieve.geyserlink.platform.geyser.listeners;
 
-import au.com.grieve.geyserlink.models.GeyserLinkMessage;
-import au.com.grieve.geyserlink.models.GeyserLinkResponse;
+import au.com.grieve.geyserlink.models.GeyserLinkSignedMessage;
 import au.com.grieve.geyserlink.platform.geyser.GeyserLink;
 import au.com.grieve.geyserlink.platform.geyser.events.GeyserLinkMessageEvent;
 import au.com.grieve.geyserlink.platform.geyser.events.GeyserLinkResponseEvent;
@@ -41,12 +40,12 @@ public class MessageListener {
         switch (event.getChannel()) {
             case "geyserlink:message":
                 plugin.getEventManager().triggerEvent(
-                        new GeyserLinkMessageEvent(event.getSession(), GeyserLinkMessage.fromBytes(event.getData())));
+                        new GeyserLinkMessageEvent(event.getSession(), GeyserLinkSignedMessage.fromBytes(event.getData())));
 
                 break;
             case "geyserlink:response":
                 plugin.getEventManager().triggerEvent(
-                        new GeyserLinkResponseEvent(event.getSession(), GeyserLinkResponse.fromBytes(event.getData())));
+                        new GeyserLinkResponseEvent(event.getSession(), GeyserLinkSignedMessage.fromBytes(event.getData())));
                 break;
         }
     }

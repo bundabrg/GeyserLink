@@ -19,6 +19,7 @@
 package au.com.grieve.geyserlink.platform.spigot.events;
 
 import au.com.grieve.geyserlink.models.GeyserLinkMessage;
+import au.com.grieve.geyserlink.models.GeyserLinkSignedMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -33,7 +34,11 @@ import org.jetbrains.annotations.NotNull;
 public class GeyserLinkMessageEvent extends Event {
     private static final HandlerList HANDLERS = new HandlerList();
     private final Player player;
-    private final GeyserLinkMessage message;
+    private final GeyserLinkSignedMessage<GeyserLinkMessage> signedMessage;
+
+    public GeyserLinkMessage getMessage() {
+        return signedMessage.getMessage();
+    }
 
     public static HandlerList getHandlerList() {
         return HANDLERS;

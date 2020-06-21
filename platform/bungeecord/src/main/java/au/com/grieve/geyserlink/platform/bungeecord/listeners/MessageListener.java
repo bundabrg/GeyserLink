@@ -18,8 +18,7 @@
 
 package au.com.grieve.geyserlink.platform.bungeecord.listeners;
 
-import au.com.grieve.geyserlink.models.GeyserLinkMessage;
-import au.com.grieve.geyserlink.models.GeyserLinkResponse;
+import au.com.grieve.geyserlink.models.GeyserLinkSignedMessage;
 import au.com.grieve.geyserlink.platform.bungeecord.GeyserLink;
 import au.com.grieve.geyserlink.platform.bungeecord.events.GeyserLinkMessageEvent;
 import au.com.grieve.geyserlink.platform.bungeecord.events.GeyserLinkResponseEvent;
@@ -43,12 +42,11 @@ public class MessageListener implements Listener {
         switch (event.getTag()) {
             case "geyserlink:message":
                 plugin.getProxy().getPluginManager().callEvent(
-                        new GeyserLinkMessageEvent(event.getSender(), GeyserLinkMessage.fromBytes(event.getData()))
-                );
+                        new GeyserLinkMessageEvent(event.getSender(), GeyserLinkSignedMessage.fromBytes(event.getData())));
                 break;
             case "geyserlink:response":
                 plugin.getProxy().getPluginManager().callEvent(
-                        new GeyserLinkResponseEvent(event.getSender(), GeyserLinkResponse.fromBytes(event.getData())));
+                        new GeyserLinkResponseEvent(event.getSender(), GeyserLinkSignedMessage.fromBytes(event.getData())));
                 break;
         }
     }

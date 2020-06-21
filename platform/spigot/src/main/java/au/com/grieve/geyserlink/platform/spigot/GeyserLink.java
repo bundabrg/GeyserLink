@@ -20,6 +20,7 @@ package au.com.grieve.geyserlink.platform.spigot;
 
 import au.com.grieve.geyserlink.models.GeyserLinkMessage;
 import au.com.grieve.geyserlink.models.GeyserLinkResponse;
+import au.com.grieve.geyserlink.models.GeyserLinkSignedMessage;
 import au.com.grieve.geyserlink.platform.spigot.listeners.MessageListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -127,10 +128,9 @@ public final class GeyserLink extends JavaPlugin {
                 SOURCE,
                 channel,
                 subChannel,
-                data,
-                ""
+                data
         );
-        player.sendPluginMessage(this, "geyserlink:message", message.getBytes());
+        player.sendPluginMessage(this, "geyserlink:message", GeyserLinkSignedMessage.sign(message, "").getBytes());
         return new MessageResult(this, player, message);
     }
 
@@ -138,13 +138,14 @@ public final class GeyserLink extends JavaPlugin {
      * Create a GeyserLink Response
      */
     public void sendResponse(Player player, GeyserLinkMessage message, byte[] data) {
-        player.sendPluginMessage(this, "geyserlink:response", new GeyserLinkResponse(
+        GeyserLinkResponse response = new GeyserLinkResponse(
                 message.getId(),
                 SOURCE,
                 message.getSource(),
-                data,
-                ""
-        ).getBytes());
+                data
+        );
+
+        player.sendPluginMessage(this, "geyserlink:response", GeyserLinkSignedMessage.sign(response, "").getBytes());
     }
 
     @Getter

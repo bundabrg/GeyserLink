@@ -27,4 +27,7 @@ import lombok.Getter;
 public abstract class Configuration {
     @JsonProperty("config-version")
     private int configVersion;
+
+    @JsonProperty("private-key")
+    private String privateKey = null;
 }

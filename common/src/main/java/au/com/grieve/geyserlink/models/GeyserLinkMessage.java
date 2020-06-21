@@ -18,27 +18,25 @@
 
 package au.com.grieve.geyserlink.models;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @ToString
-@AllArgsConstructor
-public class GeyserLinkMessage implements Serializable {
+@RequiredArgsConstructor
+public class GeyserLinkMessage extends BaseMessage {
     private final int id;
     private final String source;
     private final String channel;
     private final String subChannel;
     private final byte[] payload;
-    private final String signature;
 
     public static GeyserLinkMessage fromBytes(byte[] buffer) {
         GeyserLinkMessage message;
@@ -46,18 +44,7 @@ public class GeyserLinkMessage implements Serializable {
         try {
             return (GeyserLinkMessage) new ObjectInputStream(new ByteArrayInputStream(buffer)).readObject();
         } catch (IOException | ClassNotFoundException e) {
-            return new GeyserLinkMessage(-1, "unknown", "", "", new byte[]{}, "");
+            return null;
         }
     }
-
-    public byte[] getBytes() {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            new ObjectOutputStream(bos).writeObject(this);
-            return bos.toByteArray();
-        } catch (IOException e) {
-            return new byte[]{};
-        }
-    }
-
 }

@@ -19,6 +19,7 @@
 package au.com.grieve.geyserlink.platform.bungeecord.events;
 
 import au.com.grieve.geyserlink.models.GeyserLinkMessage;
+import au.com.grieve.geyserlink.models.GeyserLinkSignedMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -30,5 +31,9 @@ import net.md_5.bungee.api.plugin.Event;
 @AllArgsConstructor
 public class GeyserLinkMessageEvent extends Event {
     private final Connection connection;
-    private final GeyserLinkMessage message;
+    private final GeyserLinkSignedMessage<GeyserLinkMessage> signedMessage;
+
+    public GeyserLinkMessage getMessage() {
+        return signedMessage.getMessage();
+    }
 }

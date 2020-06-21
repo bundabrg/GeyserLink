@@ -16,24 +16,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.platform.bungeecord.events;
+package au.com.grieve.geyserlink.models;
 
-import au.com.grieve.geyserlink.models.GeyserLinkResponse;
-import au.com.grieve.geyserlink.models.GeyserLinkSignedMessage;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
-import net.md_5.bungee.api.connection.Connection;
-import net.md_5.bungee.api.plugin.Event;
+import lombok.Data;
 
-@Getter
-@ToString
-@AllArgsConstructor
-public class GeyserLinkResponseEvent extends Event {
-    private final Connection connection;
-    private final GeyserLinkSignedMessage<GeyserLinkResponse> signedMessage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
-    public GeyserLinkResponse getResponse() {
-        return signedMessage.getMessage();
+
+@Data
+public abstract class BaseMessage implements Serializable {
+
+    /**
+     * Return this object serialized as an array of bytes
+     *
+     * @return byte[] serialized object
+     */
+    public byte[] getBytes() {
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            new ObjectOutputStream(bos).writeObject(this);
+            return bos.toByteArray();
+        } catch (IOException e) {
+            return new byte[]{};
+        }
     }
+
 }

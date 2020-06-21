@@ -18,8 +18,7 @@
 
 package au.com.grieve.geyserlink.platform.spigot.listeners;
 
-import au.com.grieve.geyserlink.models.GeyserLinkMessage;
-import au.com.grieve.geyserlink.models.GeyserLinkResponse;
+import au.com.grieve.geyserlink.models.GeyserLinkSignedMessage;
 import au.com.grieve.geyserlink.platform.spigot.GeyserLink;
 import au.com.grieve.geyserlink.platform.spigot.events.GeyserLinkMessageEvent;
 import au.com.grieve.geyserlink.platform.spigot.events.GeyserLinkResponseEvent;
@@ -47,12 +46,11 @@ public class MessageListener implements Listener, PluginMessageListener {
         switch (channel) {
             case "geyserlink:message":
                 plugin.getServer().getPluginManager().callEvent(
-                        new GeyserLinkMessageEvent(player, GeyserLinkMessage.fromBytes(bytes))
-                );
+                        new GeyserLinkMessageEvent(player, GeyserLinkSignedMessage.fromBytes(bytes)));
                 break;
             case "geyserlink:response":
                 plugin.getServer().getPluginManager().callEvent(
-                        new GeyserLinkResponseEvent(player, GeyserLinkResponse.fromBytes(bytes)));
+                        new GeyserLinkResponseEvent(player, GeyserLinkSignedMessage.fromBytes(bytes)));
                 break;
         }
     }

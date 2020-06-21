@@ -20,6 +20,7 @@ package au.com.grieve.geyserlink.platform.bungeecord;
 
 import au.com.grieve.geyserlink.models.GeyserLinkMessage;
 import au.com.grieve.geyserlink.models.GeyserLinkResponse;
+import au.com.grieve.geyserlink.models.GeyserLinkSignedMessage;
 import au.com.grieve.geyserlink.platform.bungeecord.listeners.MessageListener;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -122,15 +123,14 @@ public class GeyserLink extends Plugin {
                 SOURCE,
                 channel,
                 subChannel,
-                data,
-                ""
+                data
         );
         if (connection instanceof ProxiedPlayer) {
-            ((ProxiedPlayer) connection).sendData("geyserlink:message", message.getBytes());
+            ((ProxiedPlayer) connection).sendData("geyserlink:message", GeyserLinkSignedMessage.sign(message, "").getBytes());
         }
 
         if (connection instanceof Server) {
-            ((Server) connection).getInfo().sendData("geyserlink:message", message.getBytes());
+            ((Server) connection).getInfo().sendData("geyserlink:message", GeyserLinkSignedMessage.sign(message, "").getBytes());
         }
         return new MessageResult(this, connection, message);
     }
@@ -143,16 +143,15 @@ public class GeyserLink extends Plugin {
                 message.getId(),
                 SOURCE,
                 message.getSource(),
-                data,
-                ""
+                data
         );
 
         if (connection instanceof ProxiedPlayer) {
-            ((ProxiedPlayer) connection).sendData("geyserlink:response", response.getBytes());
+            ((ProxiedPlayer) connection).sendData("geyserlink:response", GeyserLinkSignedMessage.sign(response, "").getBytes());
         }
 
         if (connection instanceof Server) {
-            ((Server) connection).getInfo().sendData("geyserlink:response", response.getBytes());
+            ((Server) connection).getInfo().sendData("geyserlink:response", GeyserLinkSignedMessage.sign(response, "").getBytes());
         }
     }
 
