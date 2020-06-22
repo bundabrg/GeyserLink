@@ -16,38 +16,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.models;
+package au.com.grieve.geyserlink.messages;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.UUID;
 
-@EqualsAndHashCode(callSuper = true)
-@Data
-@ToString
+@Getter
+@ToString(callSuper = true)
 @RequiredArgsConstructor
-public class GeyserLinkMessage extends BaseMessage {
-    public static final GeyserLinkMessage EMPTY = new GeyserLinkMessage(-1, UUID.randomUUID(), "", "", new byte[]{});
-
+public abstract class EnvelopeMessage extends BaseMessage {
     private final int id;
     private final UUID sender;
-    private final String channel;
-    private final String subChannel;
-    private final byte[] payload;
 
-    public static GeyserLinkMessage fromBytes(byte[] buffer) {
-        GeyserLinkMessage message;
+    public EnvelopeMessage(JsonNode node) {
+        super(node);
+        this.id = node.get("id").asInt();
+        this.sender = UUID.fromString(node.get("sender").asText());
+    }
 
-        try {
-            return (GeyserLinkMessage) new ObjectInputStream(new ByteArrayInputStream(buffer)).readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            return EMPTY;
-        }
+    @Override
+    protected ObjectNode serialize() {
+        return super.serialize()
+                .put("id", id)
+                .put("sender", sender.toString());
     }
 }

@@ -16,22 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.platform.geyser.events;
+package au.com.grieve.geyserlink.platform.geyser;
 
-import au.com.grieve.geyserlink.GeyserLink;
-import au.com.grieve.geyserlink.messages.GeyserLinkMessage;
-import au.com.grieve.geyserlink.messages.GeyserLinkSignedMessage;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
-import org.geysermc.connector.event.events.CancellableGeyserEvent;
-import org.geysermc.connector.network.session.GeyserSession;
+import au.com.grieve.geyserlink.IScheduledTask;
+import lombok.RequiredArgsConstructor;
 
-@Getter
-@ToString
-@AllArgsConstructor
-public class GeyserLinkMessageEvent extends CancellableGeyserEvent {
-    private final GeyserLink geyserLink;
-    private final GeyserSession session;
-    private final GeyserLinkSignedMessage<GeyserLinkMessage> signedMessage;
+import java.util.concurrent.ScheduledFuture;
+
+@RequiredArgsConstructor
+public class ScheduledTask implements IScheduledTask {
+    private final ScheduledFuture<?> task;
+
+    @Override
+    public void cancel() {
+        task.cancel(false);
+    }
 }

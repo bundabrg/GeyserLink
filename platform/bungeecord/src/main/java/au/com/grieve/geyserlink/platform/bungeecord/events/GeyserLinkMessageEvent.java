@@ -18,22 +18,21 @@
 
 package au.com.grieve.geyserlink.platform.bungeecord.events;
 
-import au.com.grieve.geyserlink.models.GeyserLinkMessage;
-import au.com.grieve.geyserlink.models.GeyserLinkSignedMessage;
-import lombok.AllArgsConstructor;
+import au.com.grieve.geyserlink.GeyserLink;
+import au.com.grieve.geyserlink.messages.GeyserLinkMessage;
+import au.com.grieve.geyserlink.messages.GeyserLinkSignedMessage;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import net.md_5.bungee.api.connection.Connection;
 import net.md_5.bungee.api.plugin.Event;
 
+
 @Getter
 @ToString
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class GeyserLinkMessageEvent extends Event {
+    private final GeyserLink geyserLink;
     private final Connection connection;
     private final GeyserLinkSignedMessage<GeyserLinkMessage> signedMessage;
-
-    public GeyserLinkMessage getMessage() {
-        return signedMessage.getMessage();
-    }
 }

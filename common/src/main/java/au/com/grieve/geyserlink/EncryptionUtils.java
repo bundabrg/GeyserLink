@@ -22,9 +22,12 @@ import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.UUID;
 
 public class EncryptionUtils {
     public static KeyPair generateKeyPair() {
@@ -40,14 +43,35 @@ public class EncryptionUtils {
     }
 
     public static KeyPair generateKeyPair(byte[] publicKey, byte[] privateKey) {
+        return new KeyPair(byteArrayToPublicKey(publicKey), byteArrayToPrivateKey(privateKey));
+    }
+
+    public static PublicKey byteArrayToPublicKey(byte[] publicKey) {
         try {
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKey);
-            PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKey);
-            return new KeyPair(keyFactory.generatePublic(publicKeySpec), keyFactory.generatePrivate(privateKeySpec));
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+            return keyFactory.generatePublic(publicKeySpec);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public static PrivateKey byteArrayToPrivateKey(byte[] privateKey) {
+        try {
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKey);
+            return keyFactory.generatePrivate(privateKeySpec);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static UUID toUUID(PublicKey key) {
+        if (key == null) {
+            return new UUID(0, 0);
+        }
+        return UUID.nameUUIDFromBytes(key.getEncoded());
     }
 }

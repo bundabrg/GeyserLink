@@ -18,8 +18,9 @@
 
 package au.com.grieve.geyserlink.platform.geyser.events;
 
-import au.com.grieve.geyserlink.models.GeyserLinkResponse;
-import au.com.grieve.geyserlink.models.GeyserLinkSignedMessage;
+import au.com.grieve.geyserlink.GeyserLink;
+import au.com.grieve.geyserlink.messages.GeyserLinkResponse;
+import au.com.grieve.geyserlink.messages.GeyserLinkSignedMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -30,10 +31,7 @@ import org.geysermc.connector.network.session.GeyserSession;
 @ToString
 @AllArgsConstructor
 public class GeyserLinkResponseEvent extends CancellableGeyserEvent {
+    private final GeyserLink geyserLink;
     private final GeyserSession session;
     private final GeyserLinkSignedMessage<GeyserLinkResponse> signedMessage;
-
-    public GeyserLinkResponse getResponse() {
-        return signedMessage.getMessage();
-    }
 }

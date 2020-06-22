@@ -18,19 +18,23 @@
 
 package au.com.grieve.geyserlink.platform.bungeecord.listeners;
 
-import au.com.grieve.geyserlink.models.GeyserLinkSignedMessage;
-import au.com.grieve.geyserlink.platform.bungeecord.GeyserLink;
+import au.com.grieve.geyserlink.messages.GeyserLinkMessage;
+import au.com.grieve.geyserlink.messages.GeyserLinkResponse;
+import au.com.grieve.geyserlink.messages.GeyserLinkSignedMessage;
+import au.com.grieve.geyserlink.platform.bungeecord.GeyserLinkPlugin;
 import au.com.grieve.geyserlink.platform.bungeecord.events.GeyserLinkMessageEvent;
 import au.com.grieve.geyserlink.platform.bungeecord.events.GeyserLinkResponseEvent;
 import net.md_5.bungee.api.event.PluginMessageEvent;
 import net.md_5.bungee.api.plugin.Listener;
 import net.md_5.bungee.event.EventHandler;
 
+import java.io.IOException;
+
 @SuppressWarnings("unused")
 public class MessageListener implements Listener {
-    private final GeyserLink plugin;
+    private final GeyserLinkPlugin plugin;
 
-    public MessageListener(GeyserLink plugin) {
+    public MessageListener(GeyserLinkPlugin plugin) {
         this.plugin = plugin;
 
         // Register Channels
@@ -40,36 +44,38 @@ public class MessageListener implements Listener {
 
     @EventHandler
     public void onPluginMessageReceived(PluginMessageEvent event) {
-        switch (event.getTag()) {
-            case "geyserlink:message":
-                plugin.getProxy().getPluginManager().callEvent(
-                        new GeyserLinkMessageEvent(event.getSender(), GeyserLinkSignedMessage.fromBytes(event.getData())));
-                break;
-            case "geyserlink:response":
-                plugin.getProxy().getPluginManager().callEvent(
-                        new GeyserLinkResponseEvent(event.getSender(), GeyserLinkSignedMessage.fromBytes(event.getData())));
-                break;
+        try {
+            switch (event.getTag()) {
+                case "geyserlink:message":
+                    plugin.getProxy().getPluginManager().callEvent(
+                            new GeyserLinkMessageEvent(plugin.getPlatform().getGeyserLink(), event.getSender(),
+                                    new GeyserLinkSignedMessage<>(GeyserLinkSignedMessage.from(event.getData()), GeyserLinkMessage.class)));
+                    break;
+                case "geyserlink:response":
+                    plugin.getProxy().getPluginManager().callEvent(
+                            new GeyserLinkResponseEvent(plugin.getPlatform().getGeyserLink(), event.getSender(),
+                                    new GeyserLinkSignedMessage<>(GeyserLinkSignedMessage.from(event.getData()), GeyserLinkResponse.class)));
+                    break;
+            }
+        } catch (IOException ignored) {
         }
     }
 
     /**
      * GeyserLink provides a "geyserlink:main" channel
      */
+    @SuppressWarnings("SwitchStatementWithTooFewBranches")
     @EventHandler
     public void onGeyserLinkMessage(GeyserLinkMessageEvent event) {
-        if (!event.getMessage().getChannel().equals("geyserlink:main")) {
+        if (!event.getSignedMessage().getWrappedMessage().getChannel().equals("geyserlink:main")) {
             return;
         }
 
-        switch (event.getMessage().getSubChannel().toLowerCase()) {
-            case "ping":
-                plugin.sendResponse(
-                        event.getConnection(),
-                        event.getMessage(),
-                        event.getMessage().getPayload()
-                );
-                break;
+        switch (event.getSignedMessage().getWrappedMessage().getSubChannel().toLowerCase()) {
+            default: // Common Stuff
+                plugin.getPlatform().getGeyserLink().handleMainMessage(event.getConnection(), event.getSignedMessage());
         }
+
     }
 
     /**
@@ -77,12 +83,6 @@ public class MessageListener implements Listener {
      */
     @EventHandler
     public void onGeyserLinkResponse(GeyserLinkResponseEvent event) {
-        if (!event.getResponse().getRecipient().equals(plugin.getUuid())) {
-            return;
-        }
-
-        if (plugin.getResponseMap().containsKey(event.getResponse().getId())) {
-            plugin.getResponseMap().get(event.getResponse().getId()).run(event.getResponse());
-        }
+        event.getGeyserLink().handleResponse(event.getConnection(), event.getSignedMessage());
     }
 }

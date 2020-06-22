@@ -16,32 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.models;
+package au.com.grieve.geyserlink;
 
-import lombok.Data;
+import au.com.grieve.geyserlink.messages.GeyserLinkSignedMessage;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.File;
+import java.io.InputStream;
 
+public interface IGeyserLinkPlatform {
+    File getDataFolder();
 
-@Data
-public abstract class BaseMessage implements Serializable {
+    InputStream getPlatformResourceAsStream(String name);
 
-    /**
-     * Return this object serialized as an array of bytes
-     *
-     * @return byte[] serialized object
-     */
-    public byte[] getBytes() {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            new ObjectOutputStream(bos).writeObject(this);
-            return bos.toByteArray();
-        } catch (IOException e) {
-            return new byte[]{};
-        }
-    }
+    IGeyserLinkLogger getLogger();
 
+    void sendPluginMessage(Object recipient, String channel, GeyserLinkSignedMessage<?> message);
+
+    IScheduledTask schedule(Runnable runnable, long delay);
 }

@@ -27,8 +27,8 @@ import lombok.EqualsAndHashCode;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -38,7 +38,8 @@ public class Dynamic extends BaseConfiguration {
 
     private Config config = new Config();
 
-    private List<String> trusted = new ArrayList<>();
+    private Map<String, String> trusted = new HashMap<>();
+    private Map<String, String> known = new HashMap<>();
 
     public static Dynamic loadFromFile(File configFile) {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
@@ -57,6 +58,5 @@ public class Dynamic extends BaseConfiguration {
         @JsonProperty("private-key")
         private String privateKey = null;
     }
-
 
 }

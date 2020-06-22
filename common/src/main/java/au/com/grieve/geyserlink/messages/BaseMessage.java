@@ -16,35 +16,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.models;
+package au.com.grieve.geyserlink.messages;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.util.UUID;
 
-@EqualsAndHashCode(callSuper = true)
-@Data
 @ToString
 @RequiredArgsConstructor
-public class GeyserLinkResponse extends BaseMessage {
-    public static final GeyserLinkResponse EMPTY = new GeyserLinkResponse(-1, UUID.randomUUID(), UUID.randomUUID(), new byte[]{});
+public abstract class BaseMessage {
 
-    private final int id;
-    private final UUID sender;
-    private final UUID recipient;
-    private final byte[] payload;
-
-    public static GeyserLinkResponse fromBytes(byte[] buffer) {
-        try {
-            return (GeyserLinkResponse) new ObjectInputStream(new ByteArrayInputStream(buffer)).readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            return EMPTY;
-        }
+    public BaseMessage(JsonNode node) {
     }
+
+    public static JsonNode from(String payload) throws IOException {
+        return new ObjectMapper(new YAMLFactory()).readTree(payload);
+    }
+
+    public static JsonNode from(byte[] payload) throws IOException {
+        return from(new String(payload));
+    }
+
+    protected ObjectNode serialize() {
+        return new ObjectMapper(new YAMLFactory()).createObjectNode();
+    }
+
+    public byte[] getBytes() {
+        return serialize().toString().getBytes();
+    }
+
 }
