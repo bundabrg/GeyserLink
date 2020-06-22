@@ -18,6 +18,8 @@
 
 package au.com.grieve.geyserlink.platform.spigot;
 
+import au.com.grieve.geyserlink.message.messages.PingMessage;
+import au.com.grieve.geyserlink.message.responses.PingResponse;
 import au.com.grieve.geyserlink.platform.spigot.listeners.MessageListener;
 import com.google.common.collect.Iterables;
 import lombok.Getter;
@@ -51,12 +53,8 @@ public final class GeyserLinkPlugin extends JavaPlugin {
 
             getLogger().warning("Sending ping to player");
 
-            platform.getGeyserLink().sendMessage(
-                    player,
-                    "geyserlink:main",
-                    "ping",
-                    new byte[]{(byte) upto++}
-            ).onResponse((result, response) -> getLogger().warning("Got a ping response: " + response));
+            platform.getGeyserLink().sendMessage(player, new PingMessage("bungeecord:" + upto++))
+                    .onResponse(PingResponse.class, (result, response, wrapped) -> getLogger().warning("Got a ping response: " + response + " wrapped: " + wrapped));
 
         }, 5, 5 * 20);
 

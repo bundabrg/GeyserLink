@@ -18,7 +18,7 @@
 
 package au.com.grieve.geyserlink;
 
-import au.com.grieve.geyserlink.messages.GeyserLinkSignedMessage;
+import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
 
 import java.io.File;
 import java.io.InputStream;

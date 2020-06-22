@@ -20,9 +20,14 @@ package au.com.grieve.geyserlink;
 
 import au.com.grieve.geyserlink.config.Configuration;
 import au.com.grieve.geyserlink.config.Dynamic;
-import au.com.grieve.geyserlink.messages.GeyserLinkMessage;
-import au.com.grieve.geyserlink.messages.GeyserLinkResponse;
-import au.com.grieve.geyserlink.messages.GeyserLinkSignedMessage;
+import au.com.grieve.geyserlink.message.messages.GeyserLinkMessage;
+import au.com.grieve.geyserlink.message.messages.PingMessage;
+import au.com.grieve.geyserlink.message.messages.WrappedMessage;
+import au.com.grieve.geyserlink.message.responses.GeyserLinkResponse;
+import au.com.grieve.geyserlink.message.responses.PingResponse;
+import au.com.grieve.geyserlink.message.responses.WrappedResponse;
+import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -30,6 +35,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.Base64;
@@ -144,7 +150,7 @@ public class GeyserLink {
     }
 
     /**
-     * Send GeyserLink Signed Message
+     * Send Raw GeyserLink Signed Message
      */
     public MessageResult sendMessage(Object recipient, String channel, String subChannel, byte[] data) {
         GeyserLinkMessage message = new GeyserLinkMessage(
@@ -154,10 +160,17 @@ public class GeyserLink {
                 subChannel,
                 Base64.getEncoder().encodeToString(data)
         );
-        GeyserLinkSignedMessage<GeyserLinkMessage> signedMessage = GeyserLinkSignedMessage.createSignedMessage(message, keyPair.getPrivate(), GeyserLinkMessage.class);
 
+        GeyserLinkSignedMessage<GeyserLinkMessage> signedMessage = GeyserLinkSignedMessage.createSignedMessage(message, keyPair.getPrivate(), GeyserLinkMessage.class);
         platform.sendPluginMessage(recipient, "geyserlink:message", signedMessage);
         return new MessageResult(this, recipient, message);
+    }
+
+    /**
+     * Send a Wrapped Message Object
+     */
+    public MessageResult sendMessage(Object recipient, WrappedMessage message) {
+        return sendMessage(recipient, message.getChannel(), message.getSubChannel(), message.getBytes());
     }
 
     /**
@@ -174,18 +187,26 @@ public class GeyserLink {
         platform.sendPluginMessage(recipient, "geyserlink:response", signedMessage);
     }
 
+    public void sendResponse(Object recipient, GeyserLinkMessage message, WrappedResponse response) {
+        sendResponse(recipient, message, response.getBytes());
+    }
+
     /**
      * Built in Messages
      */
     @SuppressWarnings("SwitchStatementWithTooFewBranches")
     public void handleMainMessage(Object sender, GeyserLinkSignedMessage<GeyserLinkMessage> message) {
-        switch (message.getWrappedMessage().getSubChannel()) {
+        switch (message.getMessage().getSubChannel()) {
             case "ping":
-                sendResponse(
-                        sender,
-                        message.getWrappedMessage(),
-                        message.getWrappedMessage().getPayload().getBytes()
-                );
+                try {
+                    PingMessage pingMessage = new PingMessage(PingMessage.from(Base64.getDecoder().decode(message.getMessage().getPayload())));
+                    sendResponse(
+                            sender,
+                            message.getMessage(),
+                            new PingResponse(pingMessage.getData()));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 break;
         }
     }
@@ -194,11 +215,11 @@ public class GeyserLink {
      * Handle Responses
      */
     public void handleResponse(Object sender, GeyserLinkSignedMessage<GeyserLinkResponse> message) {
-        if (!message.getWrappedMessage().getRecipient().equals(myUUID)) {
+        if (!message.getMessage().getRecipient().equals(myUUID)) {
             return;
         }
 
-        MessageResult.ResponseRunnable runnable = responseMap.get(message.getWrappedMessage().getId());
+        MessageResult.ResponseRunnable runnable = responseMap.get(message.getMessage().getId());
         if (runnable != null) {
             runnable.run(message);
         }
@@ -216,7 +237,7 @@ public class GeyserLink {
             // Clean up after a timeout
             IScheduledTask timeoutTask = geyserLink.getPlatform().schedule(() -> geyserLink.getResponseMap().remove(message.getId()), timeout);
 
-            geyserLink.getResponseMap().put(message.getId(), (response) -> {
+            geyserLink.getResponseMap().put(message.getId(), response -> {
                 // Cancel cleanup
                 timeoutTask.cancel();
 
@@ -224,7 +245,7 @@ public class GeyserLink {
                 geyserLink.getPlatform().schedule(() -> geyserLink.getResponseMap().remove(message.getId()), expiry);
 
                 // Execute
-                runnable.run(this, response);
+                runnable.run(MessageResult.this, response);
             });
 
             return this;
@@ -232,6 +253,38 @@ public class GeyserLink {
 
         public MessageResult onResponse(Runnable runnable) {
             return onResponse(runnable, 300, 30);
+        }
+
+        public <T extends WrappedResponse> MessageResult onResponse(Class<T> responseClass, WrappedRunnable<T> runnable, long timeout, long expiry) {
+            // Clean up after a timeout
+            IScheduledTask timeoutTask = geyserLink.getPlatform().schedule(() -> geyserLink.getResponseMap().remove(message.getId()), timeout);
+
+            geyserLink.getResponseMap().put(message.getId(), response -> {
+                // Cancel cleanup
+                timeoutTask.cancel();
+
+                // Set expiry
+                geyserLink.getPlatform().schedule(() -> geyserLink.getResponseMap().remove(message.getId()), expiry);
+
+                // Execute
+                try {
+                    runnable.run(MessageResult.this, response, responseClass.getConstructor(JsonNode.class).newInstance(WrappedResponse.from(Base64.getDecoder().decode(response.getMessage().getPayload()))));
+                } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | IOException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            return this;
+        }
+
+        // Wrapped Response
+        public <T extends WrappedResponse> MessageResult onResponse(Class<T> responseClass, WrappedRunnable<T> runnable) {
+            return onResponse(responseClass, runnable, 300, 30);
+        }
+
+
+        public interface WrappedRunnable<T extends WrappedResponse> {
+            void run(MessageResult result, GeyserLinkSignedMessage<GeyserLinkResponse> response, T wrapped);
         }
 
         public interface Runnable {

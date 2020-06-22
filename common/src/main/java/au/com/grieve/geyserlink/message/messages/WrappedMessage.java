@@ -16,33 +16,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.messages;
+package au.com.grieve.geyserlink.message.messages;
 
+import au.com.grieve.geyserlink.message.BaseMessage;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 
-import java.util.UUID;
+public abstract class WrappedMessage extends BaseMessage {
+    public WrappedMessage() {
+        super();
+    }
 
-@Getter
-@ToString(callSuper = true)
-@RequiredArgsConstructor
-public abstract class EnvelopeMessage extends BaseMessage {
-    private final int id;
-    private final UUID sender;
-
-    public EnvelopeMessage(JsonNode node) {
+    public WrappedMessage(JsonNode node) {
         super(node);
-        this.id = node.get("id").asInt();
-        this.sender = UUID.fromString(node.get("sender").asText());
     }
 
-    @Override
-    protected ObjectNode serialize() {
-        return super.serialize()
-                .put("id", id)
-                .put("sender", sender.toString());
-    }
+    public abstract String getChannel();
+
+    public abstract String getSubChannel();
 }

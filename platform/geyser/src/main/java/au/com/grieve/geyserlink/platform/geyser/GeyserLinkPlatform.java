@@ -21,7 +21,7 @@ package au.com.grieve.geyserlink.platform.geyser;
 import au.com.grieve.geyserlink.GeyserLink;
 import au.com.grieve.geyserlink.IGeyserLinkPlatform;
 import au.com.grieve.geyserlink.IScheduledTask;
-import au.com.grieve.geyserlink.messages.GeyserLinkSignedMessage;
+import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
 import lombok.Getter;
 import org.geysermc.connector.network.session.GeyserSession;
 

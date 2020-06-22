@@ -19,8 +19,8 @@
 package au.com.grieve.geyserlink.platform.spigot.events;
 
 import au.com.grieve.geyserlink.GeyserLink;
-import au.com.grieve.geyserlink.messages.GeyserLinkResponse;
-import au.com.grieve.geyserlink.messages.GeyserLinkSignedMessage;
+import au.com.grieve.geyserlink.message.responses.GeyserLinkResponse;
+import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;

@@ -19,6 +19,8 @@
 package au.com.grieve.geyserlink.platform.bungeecord;
 
 import au.com.grieve.geyserlink.GeyserLink;
+import au.com.grieve.geyserlink.message.messages.PingMessage;
+import au.com.grieve.geyserlink.message.responses.PingResponse;
 import au.com.grieve.geyserlink.platform.bungeecord.listeners.MessageListener;
 import com.google.common.collect.Iterables;
 import lombok.Getter;
@@ -52,12 +54,8 @@ public class GeyserLinkPlugin extends Plugin {
 
             getLogger().warning("Sending ping to player");
 
-            GeyserLink.getInstance().sendMessage(
-                    player,
-                    "geyserlink:main",
-                    "ping",
-                    new byte[]{(byte) upto++}
-            ).onResponse((result, response) -> getLogger().warning("Got a ping response: " + response));
+            GeyserLink.getInstance().sendMessage(player, new PingMessage("bungeecord:" + upto++))
+                    .onResponse(PingResponse.class, (result, response, wrapped) -> getLogger().warning("Got a ping response: " + response + " wrapped: " + wrapped));
 
         }, 5, 5, TimeUnit.SECONDS);
     }

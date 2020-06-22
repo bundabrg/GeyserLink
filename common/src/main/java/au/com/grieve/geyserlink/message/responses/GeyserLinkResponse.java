@@ -16,8 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.messages;
+package au.com.grieve.geyserlink.message.responses;
 
+import au.com.grieve.geyserlink.message.wrappers.EnvelopeMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
@@ -27,30 +28,26 @@ import java.util.UUID;
 
 @Getter
 @ToString(callSuper = true)
-public class GeyserLinkMessage extends EnvelopeMessage {
-    private final String channel;
-    private final String subChannel;
+public class GeyserLinkResponse extends EnvelopeMessage {
+    private final UUID recipient;
     private final String payload;
 
-    public GeyserLinkMessage(int id, UUID sender, String channel, String subChannel, String payload) {
+    public GeyserLinkResponse(int id, UUID sender, UUID recipient, String payload) {
         super(id, sender);
-        this.channel = channel;
-        this.subChannel = subChannel;
+        this.recipient = recipient;
         this.payload = payload;
     }
 
-    public GeyserLinkMessage(JsonNode node) {
+    public GeyserLinkResponse(JsonNode node) {
         super(node);
-        this.channel = node.get("channel").asText();
-        this.subChannel = node.get("subChannel").asText();
+        this.recipient = UUID.fromString(node.get("recipient").asText());
         this.payload = node.get("payload").asText();
     }
 
     @Override
     protected ObjectNode serialize() {
         return super.serialize()
-                .put("channel", channel)
-                .put("subChannel", subChannel)
+                .put("recipient", recipient.toString())
                 .put("payload", payload);
     }
 }

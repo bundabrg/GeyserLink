@@ -16,22 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.platform.geyser.events;
+package au.com.grieve.geyserlink.message.responses;
 
-import au.com.grieve.geyserlink.GeyserLink;
-import au.com.grieve.geyserlink.message.messages.GeyserLinkMessage;
-import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
-import org.geysermc.connector.event.events.CancellableGeyserEvent;
-import org.geysermc.connector.network.session.GeyserSession;
+import au.com.grieve.geyserlink.message.BaseMessage;
+import com.fasterxml.jackson.databind.JsonNode;
 
-@Getter
-@ToString
-@AllArgsConstructor
-public class GeyserLinkMessageEvent extends CancellableGeyserEvent {
-    private final GeyserLink geyserLink;
-    private final GeyserSession session;
-    private final GeyserLinkSignedMessage<GeyserLinkMessage> signedMessage;
+public abstract class WrappedResponse extends BaseMessage {
+
+    public WrappedResponse() {
+        super();
+    }
+
+    public WrappedResponse(JsonNode node) {
+        super(node);
+    }
 }

@@ -18,6 +18,8 @@
 
 package au.com.grieve.geyserlink.platform.geyser;
 
+import au.com.grieve.geyserlink.message.messages.PingMessage;
+import au.com.grieve.geyserlink.message.responses.PingResponse;
 import au.com.grieve.geyserlink.platform.geyser.listeners.MessageListener;
 import com.google.common.collect.Iterables;
 import lombok.Getter;
@@ -66,12 +68,8 @@ public class GeyserLinkPlugin extends GeyserPlugin {
                 }
 
                 getLogger().warning("Sending ping to player");
-                platform.getGeyserLink().sendMessage(
-                        session,
-                        "geyserlink:main",
-                        "ping",
-                        new byte[]{(byte) upto++}
-                ).onResponse((result, response) -> getLogger().warning("Got a ping response: " + response));
+                platform.getGeyserLink().sendMessage(session, new PingMessage("geyser:" + upto++))
+                        .onResponse(PingResponse.class, (result, response, wrapped) -> getLogger().warning("Got a ping response: " + response + " wrapped: " + wrapped));
 
             }, 5, 5, TimeUnit.SECONDS);
         }

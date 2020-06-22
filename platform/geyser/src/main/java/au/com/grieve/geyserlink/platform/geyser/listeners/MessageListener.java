@@ -18,9 +18,9 @@
 
 package au.com.grieve.geyserlink.platform.geyser.listeners;
 
-import au.com.grieve.geyserlink.messages.GeyserLinkMessage;
-import au.com.grieve.geyserlink.messages.GeyserLinkResponse;
-import au.com.grieve.geyserlink.messages.GeyserLinkSignedMessage;
+import au.com.grieve.geyserlink.message.messages.GeyserLinkMessage;
+import au.com.grieve.geyserlink.message.responses.GeyserLinkResponse;
+import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
 import au.com.grieve.geyserlink.platform.geyser.GeyserLinkPlugin;
 import au.com.grieve.geyserlink.platform.geyser.events.GeyserLinkMessageEvent;
 import au.com.grieve.geyserlink.platform.geyser.events.GeyserLinkResponseEvent;
@@ -65,11 +65,11 @@ public class MessageListener {
     @SuppressWarnings("SwitchStatementWithTooFewBranches")
     @Event
     public void onGeyserLinkMessage(GeyserLinkMessageEvent event) {
-        if (!event.getSignedMessage().getWrappedMessage().getChannel().equals("geyserlink:main")) {
+        if (!event.getSignedMessage().getMessage().getChannel().equals("geyserlink:main")) {
             return;
         }
 
-        switch (event.getSignedMessage().getWrappedMessage().getSubChannel().toLowerCase()) {
+        switch (event.getSignedMessage().getMessage().getSubChannel().toLowerCase()) {
             default: // Common Stuff
                 plugin.getPlatform().getGeyserLink().handleMainMessage(event.getSession(), event.getSignedMessage());
         }

@@ -16,9 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.messages;
+package au.com.grieve.geyserlink.message.wrappers;
 
 import au.com.grieve.geyserlink.GeyserLink;
+import au.com.grieve.geyserlink.message.BaseMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
@@ -42,7 +43,7 @@ public class GeyserLinkSignedMessage<T extends EnvelopeMessage> extends BaseMess
     private final String signature;
     private final Class<T> messageClass;
 
-    private final T wrappedMessage;
+    private final T message;
 
     public GeyserLinkSignedMessage(String payload, String signature, Class<T> messageClass) {
         this.payload = payload;
@@ -56,7 +57,7 @@ public class GeyserLinkSignedMessage<T extends EnvelopeMessage> extends BaseMess
         } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException | InstantiationException | IOException e) {
             e.printStackTrace();
         }
-        this.wrappedMessage = message;
+        this.message = message;
     }
 
     public GeyserLinkSignedMessage(JsonNode node, Class<T> messageClass) {
@@ -72,7 +73,7 @@ public class GeyserLinkSignedMessage<T extends EnvelopeMessage> extends BaseMess
         } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException | InstantiationException | IOException e) {
             e.printStackTrace();
         }
-        this.wrappedMessage = message;
+        this.message = message;
     }
 
     public static <T extends EnvelopeMessage> GeyserLinkSignedMessage<T> createSignedMessage(T message, PrivateKey key, Class<T> messageClass) {
@@ -94,7 +95,7 @@ public class GeyserLinkSignedMessage<T extends EnvelopeMessage> extends BaseMess
      * Returns true if the signature is valid
      */
     public boolean isValid() {
-        PublicKey key = GeyserLink.getInstance().getKnownKeys().get(wrappedMessage.getSender());
+        PublicKey key = GeyserLink.getInstance().getKnownKeys().get(message.getSender());
         if (key != null) {
             try {
                 Signature sign = Signature.getInstance("SHA256withRSA");
@@ -108,11 +109,11 @@ public class GeyserLinkSignedMessage<T extends EnvelopeMessage> extends BaseMess
     }
 
     public boolean isKnown() {
-        return GeyserLink.getInstance().getKnownKeys().containsKey(wrappedMessage.getSender());
+        return GeyserLink.getInstance().getKnownKeys().containsKey(message.getSender());
     }
 
     public boolean isTrusted() {
-        return GeyserLink.getInstance().getTrustedKeys().containsKey(wrappedMessage.getSender());
+        return GeyserLink.getInstance().getTrustedKeys().containsKey(message.getSender());
     }
 
 

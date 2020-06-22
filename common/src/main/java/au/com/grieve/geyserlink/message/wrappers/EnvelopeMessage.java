@@ -16,23 +16,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.platform.bungeecord.events;
+package au.com.grieve.geyserlink.message.wrappers;
 
-import au.com.grieve.geyserlink.GeyserLink;
-import au.com.grieve.geyserlink.message.messages.GeyserLinkMessage;
-import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
+import au.com.grieve.geyserlink.message.BaseMessage;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-import net.md_5.bungee.api.connection.Connection;
-import net.md_5.bungee.api.plugin.Event;
 
+import java.util.UUID;
 
 @Getter
-@ToString
+@ToString(callSuper = true)
 @RequiredArgsConstructor
-public class GeyserLinkMessageEvent extends Event {
-    private final GeyserLink geyserLink;
-    private final Connection connection;
-    private final GeyserLinkSignedMessage<GeyserLinkMessage> signedMessage;
+public abstract class EnvelopeMessage extends BaseMessage {
+    private final int id;
+    private final UUID sender;
+
+    public EnvelopeMessage(JsonNode node) {
+        super(node);
+        this.id = node.get("id").asInt();
+        this.sender = UUID.fromString(node.get("sender").asText());
+    }
+
+    @Override
+    protected ObjectNode serialize() {
+        return super.serialize()
+                .put("id", id)
+                .put("sender", sender.toString());
+    }
 }

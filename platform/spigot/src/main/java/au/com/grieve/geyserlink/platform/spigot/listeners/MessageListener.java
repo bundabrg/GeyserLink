@@ -18,9 +18,9 @@
 
 package au.com.grieve.geyserlink.platform.spigot.listeners;
 
-import au.com.grieve.geyserlink.messages.GeyserLinkMessage;
-import au.com.grieve.geyserlink.messages.GeyserLinkResponse;
-import au.com.grieve.geyserlink.messages.GeyserLinkSignedMessage;
+import au.com.grieve.geyserlink.message.messages.GeyserLinkMessage;
+import au.com.grieve.geyserlink.message.responses.GeyserLinkResponse;
+import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
 import au.com.grieve.geyserlink.platform.spigot.GeyserLinkPlugin;
 import au.com.grieve.geyserlink.platform.spigot.events.GeyserLinkMessageEvent;
 import au.com.grieve.geyserlink.platform.spigot.events.GeyserLinkResponseEvent;
@@ -71,11 +71,11 @@ public class MessageListener implements Listener, PluginMessageListener {
     @SuppressWarnings("SwitchStatementWithTooFewBranches")
     @EventHandler
     public void onGeyserLinkMessage(GeyserLinkMessageEvent event) {
-        if (!event.getSignedMessage().getWrappedMessage().getChannel().equals("geyserlink:main")) {
+        if (!event.getSignedMessage().getMessage().getChannel().equals("geyserlink:main")) {
             return;
         }
 
-        switch (event.getSignedMessage().getWrappedMessage().getSubChannel().toLowerCase()) {
+        switch (event.getSignedMessage().getMessage().getSubChannel().toLowerCase()) {
             default: // Common Stuff
                 plugin.getPlatform().getGeyserLink().handleMainMessage(event.getPlayer(), event.getSignedMessage());
         }

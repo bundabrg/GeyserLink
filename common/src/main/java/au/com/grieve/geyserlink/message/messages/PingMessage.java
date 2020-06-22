@@ -16,22 +16,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.platform.geyser.events;
+package au.com.grieve.geyserlink.message.messages;
 
-import au.com.grieve.geyserlink.GeyserLink;
-import au.com.grieve.geyserlink.message.messages.GeyserLinkMessage;
-import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.ToString;
-import org.geysermc.connector.event.events.CancellableGeyserEvent;
-import org.geysermc.connector.network.session.GeyserSession;
+
 
 @Getter
-@ToString
-@AllArgsConstructor
-public class GeyserLinkMessageEvent extends CancellableGeyserEvent {
-    private final GeyserLink geyserLink;
-    private final GeyserSession session;
-    private final GeyserLinkSignedMessage<GeyserLinkMessage> signedMessage;
+@ToString(callSuper = true)
+public class PingMessage extends WrappedMessage {
+    private final String channel = "geyserlink:main";
+    private final String subChannel = "ping";
+
+    private final String data;
+
+    public PingMessage(String data) {
+        super();
+        this.data = data;
+    }
+
+    public PingMessage(JsonNode node) {
+        super(node);
+        this.data = node.get("data").asText();
+    }
+
+    @Override
+    protected ObjectNode serialize() {
+        return super.serialize()
+                .put("data", data);
+    }
 }
