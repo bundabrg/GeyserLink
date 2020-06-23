@@ -92,26 +92,37 @@ public class GeyserLinkSignedMessage<T extends EnvelopeMessage> extends BaseMess
     }
 
     /**
-     * Returns true if the signature is valid
+     * Return true if signature is valid for the specific public key
      */
-    public boolean isValid() {
-        PublicKey key = GeyserLink.getInstance().getKnownKeys().get(message.getSender());
-        if (key != null) {
-            try {
-                Signature sign = Signature.getInstance("SHA256withRSA");
-                sign.initVerify(key);
-                sign.update(payload.getBytes());
-                return sign.verify(Base64.getDecoder().decode(signature));
-            } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException ignored) {
-            }
+    public boolean isValid(PublicKey key) {
+        try {
+            Signature sign = Signature.getInstance("SHA256withRSA");
+            sign.initVerify(key);
+            sign.update(payload.getBytes());
+            return sign.verify(Base64.getDecoder().decode(signature));
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException ignored) {
         }
         return false;
     }
 
+    /**
+     * Returns true if the signature is valid
+     */
+    @ToString.Include
+    public boolean isValid() {
+        PublicKey key = GeyserLink.getInstance().getKnownKeys().get(message.getSender());
+        if (key != null) {
+            return isValid(key);
+        }
+        return false;
+    }
+
+    @ToString.Include
     public boolean isKnown() {
         return GeyserLink.getInstance().getKnownKeys().containsKey(message.getSender());
     }
 
+    @ToString.Include
     public boolean isTrusted() {
         return GeyserLink.getInstance().getTrustedKeys().containsKey(message.getSender());
     }

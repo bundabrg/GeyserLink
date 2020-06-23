@@ -18,6 +18,7 @@
 
 package au.com.grieve.geyserlink.message.responses;
 
+import au.com.grieve.geyserlink.EncryptionUtils;
 import au.com.grieve.geyserlink.message.messages.GeyserLinkMessage;
 import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,32 +27,34 @@ import lombok.Getter;
 import lombok.ToString;
 
 import java.io.IOException;
+import java.security.PublicKey;
 import java.util.Base64;
 
 
+@SuppressWarnings("unused")
 @Getter
 @ToString
-public class PingResponse extends WrappedResponse {
-    private final String data;
+public class WhoisResponse extends WrappedResponse {
+    private final PublicKey publicKey;
 
-    public PingResponse(String data) {
+    public WhoisResponse(PublicKey publicKey) {
         super();
 
-        this.data = data;
+        this.publicKey = publicKey;
     }
 
-    public PingResponse(JsonNode node) {
+    public WhoisResponse(JsonNode node) {
         super(node);
-        this.data = node.get("data").asText();
+        this.publicKey = EncryptionUtils.byteArrayToPublicKey(Base64.getDecoder().decode(node.get("publicKey").asText()));
     }
 
-    public PingResponse(GeyserLinkSignedMessage<GeyserLinkMessage> message) throws IOException {
+    public WhoisResponse(GeyserLinkSignedMessage<GeyserLinkMessage> message) throws IOException {
         this(from(Base64.getDecoder().decode(message.getMessage().getPayload())));
     }
 
     @Override
     protected ObjectNode serialize() {
         return super.serialize()
-                .put("data", data);
+                .put("publicKey", Base64.getEncoder().encodeToString(publicKey.getEncoded()));
     }
 }

@@ -18,14 +18,18 @@
 
 package au.com.grieve.geyserlink.message.messages;
 
+import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.ToString;
 
+import java.io.IOException;
+import java.util.Base64;
+
 
 @Getter
-@ToString(callSuper = true)
+@ToString
 public class PingMessage extends WrappedMessage {
     private final String channel = "geyserlink:main";
     private final String subChannel = "ping";
@@ -40,6 +44,10 @@ public class PingMessage extends WrappedMessage {
     public PingMessage(JsonNode node) {
         super(node);
         this.data = node.get("data").asText();
+    }
+
+    public PingMessage(GeyserLinkSignedMessage<GeyserLinkMessage> message) throws IOException {
+        this(from(Base64.getDecoder().decode(message.getMessage().getPayload())));
     }
 
     @Override

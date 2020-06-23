@@ -22,9 +22,11 @@ import au.com.grieve.geyserlink.config.Configuration;
 import au.com.grieve.geyserlink.config.Dynamic;
 import au.com.grieve.geyserlink.message.messages.GeyserLinkMessage;
 import au.com.grieve.geyserlink.message.messages.PingMessage;
+import au.com.grieve.geyserlink.message.messages.WhoisMessage;
 import au.com.grieve.geyserlink.message.messages.WrappedMessage;
 import au.com.grieve.geyserlink.message.responses.GeyserLinkResponse;
 import au.com.grieve.geyserlink.message.responses.PingResponse;
+import au.com.grieve.geyserlink.message.responses.WhoisResponse;
 import au.com.grieve.geyserlink.message.responses.WrappedResponse;
 import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -44,6 +46,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 @Getter
@@ -134,6 +137,20 @@ public class GeyserLink {
         }
     }
 
+    protected void saveKeys() {
+        dynamic.getTrusted().clear();
+        dynamic.getKnown().clear();
+
+        for (PublicKey key : trustedKeys.values()) {
+            dynamic.getTrusted().put(EncryptionUtils.toUUID(key).toString(), Base64.getEncoder().encodeToString(key.getEncoded()));
+        }
+
+        for (Map.Entry<UUID, PublicKey> entry : knownKeys.entrySet().stream().filter(e -> !trustedKeys.containsKey(e.getKey())).collect(Collectors.toList())) {
+            dynamic.getKnown().put(EncryptionUtils.toUUID(entry.getValue()).toString(), Base64.getEncoder().encodeToString(entry.getValue().getEncoded()));
+        }
+        dynamic.saveToFile(dynamicFile);
+    }
+
     /**
      * Generate new configuration file
      */
@@ -194,20 +211,39 @@ public class GeyserLink {
     /**
      * Built in Messages
      */
-    @SuppressWarnings("SwitchStatementWithTooFewBranches")
     public void handleMainMessage(Object sender, GeyserLinkSignedMessage<GeyserLinkMessage> message) {
-        switch (message.getMessage().getSubChannel()) {
-            case "ping":
-                try {
-                    PingMessage pingMessage = new PingMessage(PingMessage.from(Base64.getDecoder().decode(message.getMessage().getPayload())));
-                    sendResponse(
-                            sender,
-                            message.getMessage(),
-                            new PingResponse(pingMessage.getData()));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                break;
+        try {
+            // If Message is not known we will send a whois request out to get the public key
+            if (!message.isKnown()) {
+                sendMessage(sender, new WhoisMessage(message.getMessage().getSender()))
+                        .onResponse(WhoisResponse.class, (result, response, wrapped) -> {
+                            if (!response.getMessage().getSender().equals(message.getMessage().getSender())) {
+                                return;
+                            }
+
+                            if (!response.isValid(wrapped.getPublicKey())) {
+                                getPlatform().getLogger().debug("WhoisResponse is not signed properly");
+                                return;
+                            }
+
+                            getKnownKeys().put(response.getMessage().getSender(), wrapped.getPublicKey());
+                            saveKeys();
+                        });
+            }
+
+            switch (message.getMessage().getSubChannel()) {
+                case "ping":  // Return a ping message containing the data payload
+                    PingMessage pingMessage = new PingMessage(message);
+                    sendResponse(sender, message.getMessage(), new PingResponse(pingMessage.getData()));
+                    break;
+                case "whois": // Return our public key if someone wants it
+                    WhoisMessage whoisMessage = new WhoisMessage(message);
+                    if (whoisMessage.getUuid().equals(GeyserLink.getInstance().getMyUUID())) {
+                        sendResponse(sender, message.getMessage(), new WhoisResponse(GeyserLink.getInstance().keyPair.getPublic()));
+                    }
+                    break;
+            }
+        } catch (IOException ignored) {
         }
     }
 

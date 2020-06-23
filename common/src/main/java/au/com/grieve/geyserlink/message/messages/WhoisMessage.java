@@ -16,9 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.message.responses;
+package au.com.grieve.geyserlink.message.messages;
 
-import au.com.grieve.geyserlink.message.messages.GeyserLinkMessage;
 import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -27,31 +26,35 @@ import lombok.ToString;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.UUID;
 
 
+@SuppressWarnings("unused")
 @Getter
 @ToString
-public class PingResponse extends WrappedResponse {
-    private final String data;
+public class WhoisMessage extends WrappedMessage {
+    private final String channel = "geyserlink:main";
+    private final String subChannel = "whois";
 
-    public PingResponse(String data) {
+    private final UUID uuid;
+
+    public WhoisMessage(UUID uuid) {
         super();
-
-        this.data = data;
+        this.uuid = uuid;
     }
 
-    public PingResponse(JsonNode node) {
+    public WhoisMessage(JsonNode node) {
         super(node);
-        this.data = node.get("data").asText();
+        this.uuid = UUID.fromString(node.get("uuid").asText());
     }
 
-    public PingResponse(GeyserLinkSignedMessage<GeyserLinkMessage> message) throws IOException {
+    public WhoisMessage(GeyserLinkSignedMessage<GeyserLinkMessage> message) throws IOException {
         this(from(Base64.getDecoder().decode(message.getMessage().getPayload())));
     }
 
     @Override
     protected ObjectNode serialize() {
         return super.serialize()
-                .put("data", data);
+                .put("uuid", uuid.toString());
     }
 }
