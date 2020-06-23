@@ -1,0 +1,9 @@
+name: GeyserLink
+version: 1.1.0-dev
+main: au.com.grieve.geyserlink.platform.spigot.GeyserLinkPlugin
+api-version: "1.15"
+authors: [Bundabrg]
+description: Provides a link between Geyser and Bukkit/Bungeecord plugins
+permissions:
+  geyserlink.admin:
+    default: op

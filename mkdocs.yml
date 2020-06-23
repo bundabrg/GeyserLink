@@ -8,7 +8,7 @@ edit_uri: ""
 copyright: 'Copyright (C) 2020 GeyserLink Developers'
 
 extra_css:
-  - 'css/mkpdf.css'
+  - 'css/mkdocs.css'
 #  - 'css/version_select.css'
 
 #extra_javascript:
@@ -75,4 +75,7 @@ plugins:
 
 nav:
   - Introduction: index.md
+  - QuickStart: quickstart.md
+  - How it works: howitworks.md
+  - Custom Messages: custommessages.md
   - Contributing: contributing.md
