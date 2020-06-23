@@ -91,3 +91,18 @@ Now it will output the response it receives. Note that the lambda here is passed
 !!! note
     GeyserLink will trigger a `GeyserLinkResponseEvent` for any response but it is less useful as responses can more easily
     be used through the `onResponse` method as demonstrated here.
+
+
+## Private and Public Keys
+
+When first run GeyserLink will generate a new public and private key for itself, storing these in the configuration file
+`dynamic.yml`. The private key should be considered confidential.
+
+When sending signed messages GeyserLink will use its private key to sign the message. The receiving server will use
+the public key to verify if a signature is valid and if it is a trusted public key.
+
+If GeyserLink receives a message by a sender it does not have the public key for it will send out a WHOIS packet asking the
+sender for their public key and will then add it to its known key list and persist this into the `dyanmic.yml` configuration
+file.
+
+Any key can be made trusted by editing the `dyanmic.yml` file and moving the key into the `trusted` list.

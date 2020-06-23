@@ -36,6 +36,13 @@ and on a Geyser proxy and that either side may send the message to get a respons
 Here we define the channel and subchannel that this message will use. The rest is mainly boilerplate dealing with
 serializing or deserializing the object.
 
+!!! info
+     Messages make use of JSON to contain their structure in a packet. This means that when serializing an object
+     it will call the `serialize` method that will add to an ObjectNode any data relevant for the object.
+     
+     To deserialize a constructor taking a `JsonNode` is used which then pulls from that any relevant fields for
+     the object.
+
 ### PlayerQueryResponse
 
 !!! example
@@ -103,10 +110,47 @@ simple example for a Spigot server.
     }
     ```
     
- ## Serializing and Deserializing
+## Security
+
+You may have noticed an issue with the previous example.  Anyone could connect to a server and either spoof GeyserLink
+messages or run their own GeyserLink plugin on a proxy and thus the player count must come from a trusted partner. We also
+don't want a random person being able to query the player count.
+
+!!! note
+    If possible try support untrusted clients as well. If the player count in this example is not confidential then there may be
+    no reason not to still allow queries. Also if the message is coming from a client side mod then it will be untrusted
+    by default.
+
+To solve this we need to check on both sides. On the client side the following would only accept trusted responses:
+
+!!! example
+    ```java
+    GeyserLink.getInstance().sendMessage(player, new PlayerQueryMessage())
+        .onResponse(PlayerQueryResponse.class, (result, signed, response) -> {
+            if (signed.isTrusted()) {
+                getLogger(String.format("The server has %d players on it", response.getCount()));
+            }
+        });
+    ```
  
- Messages make use of JSON to contain their structure in a packet. This means that when serializing an object
- it will call the `serialize` method that will add to an ObjectNode any data relevant for the object.
- 
- To deserialize a constructor taking a `JsonNode` is used which then pulls from that any relevant fields for
- the object.
+The server could be updated as follows:
+
+!!! example
+    ```java
+    @EventHandler
+    public void onGeyserLinkMessage(GeyserLinkMessageEvent event) {
+        if (!event.getSignedMessage().getMessage().getChannel().equals("myPlugin:command")) {
+            return;
+        }
+        
+        switch(event.getSignedMessage().getMessage().getSubChannel()) {
+            case "player-query":
+                if (event.getSignedMessage().isTrusted()) {
+                    GeyserLink.getInstance().sendResponse(event.getPlayer(), event.getSignedMessage().getMessage(),
+                            new PlayerQueryResponse(plugin.getServer().getOnlinePlayers().size()));
+                }
+                break;
+        }
+    }
+    ```
+
