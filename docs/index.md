@@ -6,7 +6,7 @@
 
 GeyserLink aims to provide an easy method of sending messages between any server involved in a Minecraft connection and to do
 so in such a way as to allow both a trusted setup and an untrusted setup. This could also potentially be a useful way for client side
-mods to implement better communication.
+mods to implement better communication. It is the TCP/IP of PluginMessages.
 
 An example configuration could be a Geyser server connected to a Bungeecord server connecting to a Spigot server. If all three servers are
 under the control of the same user then they can be configured to trust each other. However if the Geyser server is instead run by
@@ -46,8 +46,21 @@ can be verified by other participants as being valid.
     ```java
     // Will get a response from every participant
     GeyserLink.getInstance().sendMessage(player, new PingMessage("Hello world!"))
-        .onResponse(PingResponse.class, (result, response, wrapped) -> {
-            getLogger().info("Got a ping response: " + wrapped);
+        .onResponse(PingResponse.class, (result, signed, response) -> {
+            getLogger().info("Got a ping response: " + response);
         });
     ```
 
+!!! example
+    Send a custom message and retrieve a custom complex response.
+    ```java
+    // Will get a response from every participant
+    GeyserLink.getInstance().sendMessage(player, new GetPlayerProfileMessage("bundie"))
+        .onResponse(PingResponse.class, (result, signed, response) -> {
+            // Only accept trusted responses
+            if (signed.isTrusted()) {
+                getLogger().info(String.format("name:%s, location:%s world:%s",
+                        response.getName(), response.getLocation().toString(), response.getWorld()));
+            }
+        });
+    ```
