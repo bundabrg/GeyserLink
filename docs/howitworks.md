@@ -68,7 +68,7 @@ Lets expand on the previous example and return something back. The Event will no
         if (message.getChannel().equals("myChannel") && message.getSubChannel().equals("mySubChannel")) {
             getLogger().info("Got a GeyserLink message with payload: " + new String(message.getPayload()));
             
-            GeyserLink.getInstance().sendResponse(event.getPlayer(), message, "responded");
+            GeyserLink.getInstance().sendResponse(event.getPlayer(), message, "responded".getBytes());
         }
     }
     ```

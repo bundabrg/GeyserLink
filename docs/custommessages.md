@@ -66,7 +66,7 @@ serializing or deserializing the object.
         @Override
         protected ObjectNode serialize() {
             return super.serialize()
-                    .put("data", data);
+                    .put("count", count);
         }
     }
     ```
@@ -75,7 +75,7 @@ This one is a bit more interesting as it has a data field `count`. We have to de
 and how to serialize to an ObjectNode.
 
 !!! note
-    Note that the Response does not need to define a channel or subchannel.
+    The Response does not need to define a channel or subchannel.
 
 ### Putting it together
 
@@ -88,6 +88,12 @@ Now you can send a PlayerQueryMessage by doing something like this:
             getLogger(String.format("The server has %d players on it", response.getCount()));
         });
     ```
+
+!!! note
+    When sending a raw message you only have the fields `result` and `signed`. When using a wrapped message you also
+    get a field for the message itself. In the above case `response` will be a `PlayerQueryResponse` object and will
+    be deserialized from the `signed` object but we still get the `signed` object as it has data on it that could be
+    useful.
 
 ## Message Event
 Whichever server is responding to the message will need to register an event listener for the message. The following is a
@@ -105,6 +111,25 @@ simple example for a Spigot server.
             case "player-query":
                 GeyserLink.getInstance().sendResponse(event.getPlayer(), event.getSignedMessage().getMessage(),
                         new PlayerQueryResponse(plugin.getServer().getOnlinePlayers().size()));
+                break;
+        }
+    }
+    ```
+
+For completion sake the following is for the GeyserMC server, note how similar it is.
+
+!!! example
+    ```java
+    @Event
+    public void onGeyserLinkMessage(GeyserLinkMessageEvent event) {
+        if (!event.getSignedMessage().getMessage().getChannel().equals("myPlugin:command")) {
+            return;
+        }
+        
+        switch(event.getSignedMessage().getMessage().getSubChannel()) {
+            case "player-query":
+                GeyserLink.getInstance().sendResponse(event.getSession(), event.getSignedMessage().getMessage(),
+                        new PlayerQueryResponse(plugin.getConnector().getPlayers().values().size()));
                 break;
         }
     }
