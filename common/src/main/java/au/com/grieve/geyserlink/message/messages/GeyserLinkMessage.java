@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.ToString;
 
+import java.util.Base64;
 import java.util.UUID;
 
 @Getter
@@ -31,9 +32,9 @@ import java.util.UUID;
 public class GeyserLinkMessage extends EnvelopeMessage {
     private final String channel;
     private final String subChannel;
-    private final String payload;
+    private final byte[] payload;
 
-    public GeyserLinkMessage(int id, UUID sender, String channel, String subChannel, String payload) {
+    public GeyserLinkMessage(int id, UUID sender, String channel, String subChannel, byte[] payload) {
         super(id, sender);
         this.channel = channel;
         this.subChannel = subChannel;
@@ -44,7 +45,7 @@ public class GeyserLinkMessage extends EnvelopeMessage {
         super(node);
         this.channel = node.get("channel").asText();
         this.subChannel = node.get("subChannel").asText();
-        this.payload = node.get("payload").asText();
+        this.payload = Base64.getDecoder().decode(node.get("payload").asText());
     }
 
     @Override
@@ -52,6 +53,6 @@ public class GeyserLinkMessage extends EnvelopeMessage {
         return super.serialize()
                 .put("channel", channel)
                 .put("subChannel", subChannel)
-                .put("payload", payload);
+                .put("payload", Base64.getEncoder().encodeToString(payload));
     }
 }

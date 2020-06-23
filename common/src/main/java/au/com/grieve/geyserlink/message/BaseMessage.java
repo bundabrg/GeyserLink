@@ -34,20 +34,20 @@ public abstract class BaseMessage {
     public BaseMessage(JsonNode node) {
     }
 
-    public static JsonNode from(String payload) throws IOException {
-        return new ObjectMapper(new YAMLFactory()).readTree(payload);
-    }
-
-    public static JsonNode from(byte[] payload) throws IOException {
-        return from(new String(payload));
-    }
-
     protected ObjectNode serialize() {
         return new ObjectMapper(new YAMLFactory()).createObjectNode();
     }
 
     public byte[] getBytes() {
         return serialize().toString().getBytes();
+    }
+
+    public static JsonNode from(String payload) throws IOException {
+        return new ObjectMapper(new YAMLFactory()).readTree(payload);
+    }
+
+    public static JsonNode from(byte[] payload) throws IOException {
+        return from(new String(payload));
     }
 
 }

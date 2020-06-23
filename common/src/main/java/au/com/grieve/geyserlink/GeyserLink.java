@@ -175,7 +175,7 @@ public class GeyserLink {
                 EncryptionUtils.toUUID(keyPair.getPublic()),
                 channel,
                 subChannel,
-                Base64.getEncoder().encodeToString(data)
+                data
         );
 
         GeyserLinkSignedMessage<GeyserLinkMessage> signedMessage = GeyserLinkSignedMessage.createSignedMessage(message, keyPair.getPrivate(), GeyserLinkMessage.class);
@@ -198,7 +198,7 @@ public class GeyserLink {
                 message.getId(),
                 EncryptionUtils.toUUID(keyPair.getPublic()),
                 message.getSender(),
-                Base64.getEncoder().encodeToString(data)
+                data
         );
         GeyserLinkSignedMessage<GeyserLinkResponse> signedMessage = GeyserLinkSignedMessage.createSignedMessage(response, keyPair.getPrivate(), GeyserLinkResponse.class);
         platform.sendPluginMessage(recipient, "geyserlink:response", signedMessage);
@@ -216,28 +216,28 @@ public class GeyserLink {
             // If Message is not known we will send a whois request out to get the public key
             if (!message.isKnown()) {
                 sendMessage(sender, new WhoisMessage(message.getMessage().getSender()))
-                        .onResponse(WhoisResponse.class, (result, response, wrapped) -> {
-                            if (!response.getMessage().getSender().equals(message.getMessage().getSender())) {
+                        .onResponse(WhoisResponse.class, (result, signed, response) -> {
+                            if (!signed.getMessage().getSender().equals(message.getMessage().getSender())) {
                                 return;
                             }
 
-                            if (!response.isValid(wrapped.getPublicKey())) {
+                            if (!signed.isValid(response.getPublicKey())) {
                                 getPlatform().getLogger().debug("WhoisResponse is not signed properly");
                                 return;
                             }
 
-                            getKnownKeys().put(response.getMessage().getSender(), wrapped.getPublicKey());
+                            getKnownKeys().put(signed.getMessage().getSender(), response.getPublicKey());
                             saveKeys();
                         });
             }
 
             switch (message.getMessage().getSubChannel()) {
                 case "ping":  // Return a ping message containing the data payload
-                    PingMessage pingMessage = new PingMessage(message);
+                    PingMessage pingMessage = new PingMessage(PingMessage.from(message.getMessage().getPayload()));
                     sendResponse(sender, message.getMessage(), new PingResponse(pingMessage.getData()));
                     break;
                 case "whois": // Return our public key if someone wants it
-                    WhoisMessage whoisMessage = new WhoisMessage(message);
+                    WhoisMessage whoisMessage = new WhoisMessage(WhoisMessage.from(message.getMessage().getPayload()));
                     if (whoisMessage.getUuid().equals(GeyserLink.getInstance().getMyUUID())) {
                         sendResponse(sender, message.getMessage(), new WhoisResponse(GeyserLink.getInstance().keyPair.getPublic()));
                     }
@@ -269,7 +269,7 @@ public class GeyserLink {
         private final Object recipient;
         private final GeyserLinkMessage message;
 
-        public MessageResult onResponse(Runnable runnable, long timeout, long expiry) {
+        public <T extends GeyserLinkSignedMessage<GeyserLinkResponse>> MessageResult onResponse(Runnable runnable, long timeout, long expiry) {
             // Clean up after a timeout
             IScheduledTask timeoutTask = geyserLink.getPlatform().schedule(() -> geyserLink.getResponseMap().remove(message.getId()), timeout);
 
@@ -287,30 +287,22 @@ public class GeyserLink {
             return this;
         }
 
-        public MessageResult onResponse(Runnable runnable) {
+        public <T extends GeyserLinkSignedMessage<GeyserLinkResponse>> MessageResult onResponse(Runnable runnable) {
             return onResponse(runnable, 300, 30);
         }
 
         public <T extends WrappedResponse> MessageResult onResponse(Class<T> responseClass, WrappedRunnable<T> runnable, long timeout, long expiry) {
-            // Clean up after a timeout
-            IScheduledTask timeoutTask = geyserLink.getPlatform().schedule(() -> geyserLink.getResponseMap().remove(message.getId()), timeout);
-
-            geyserLink.getResponseMap().put(message.getId(), response -> {
-                // Cancel cleanup
-                timeoutTask.cancel();
-
-                // Set expiry
-                geyserLink.getPlatform().schedule(() -> geyserLink.getResponseMap().remove(message.getId()), expiry);
-
-                // Execute
+            return onResponse((result, response) -> {
                 try {
-                    runnable.run(MessageResult.this, response, responseClass.getConstructor(JsonNode.class).newInstance(WrappedResponse.from(Base64.getDecoder().decode(response.getMessage().getPayload()))));
-                } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | IOException e) {
+                    runnable.run(
+                            result,
+                            response,
+                            responseClass.getConstructor(JsonNode.class)
+                                    .newInstance(WrappedResponse.from(response.getMessage().getPayload())));
+                } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | IOException e) {
                     e.printStackTrace();
                 }
-            });
-
-            return this;
+            }, timeout, expiry);
         }
 
         // Wrapped Response
@@ -318,13 +310,12 @@ public class GeyserLink {
             return onResponse(responseClass, runnable, 300, 30);
         }
 
-
-        public interface WrappedRunnable<T extends WrappedResponse> {
-            void run(MessageResult result, GeyserLinkSignedMessage<GeyserLinkResponse> response, T wrapped);
+        public interface Runnable {
+            void run(MessageResult result, GeyserLinkSignedMessage<GeyserLinkResponse> signed);
         }
 
-        public interface Runnable {
-            void run(MessageResult result, GeyserLinkSignedMessage<GeyserLinkResponse> response);
+        public interface WrappedRunnable<T extends WrappedResponse> {
+            void run(MessageResult result, GeyserLinkSignedMessage<GeyserLinkResponse> signed, T response);
         }
 
         public interface ResponseRunnable {

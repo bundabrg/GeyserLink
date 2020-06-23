@@ -24,15 +24,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.ToString;
 
+import java.util.Base64;
 import java.util.UUID;
 
 @Getter
 @ToString(callSuper = true)
 public class GeyserLinkResponse extends EnvelopeMessage {
     private final UUID recipient;
-    private final String payload;
+    private final byte[] payload;
 
-    public GeyserLinkResponse(int id, UUID sender, UUID recipient, String payload) {
+    public GeyserLinkResponse(int id, UUID sender, UUID recipient, byte[] payload) {
         super(id, sender);
         this.recipient = recipient;
         this.payload = payload;
@@ -41,13 +42,13 @@ public class GeyserLinkResponse extends EnvelopeMessage {
     public GeyserLinkResponse(JsonNode node) {
         super(node);
         this.recipient = UUID.fromString(node.get("recipient").asText());
-        this.payload = node.get("payload").asText();
+        this.payload = Base64.getDecoder().decode(node.get("payload").asText());
     }
 
     @Override
     protected ObjectNode serialize() {
         return super.serialize()
                 .put("recipient", recipient.toString())
-                .put("payload", payload);
+                .put("payload", Base64.getEncoder().encodeToString(payload));
     }
 }

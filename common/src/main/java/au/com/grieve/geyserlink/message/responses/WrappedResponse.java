@@ -18,10 +18,15 @@
 
 package au.com.grieve.geyserlink.message.responses;
 
-import au.com.grieve.geyserlink.message.BaseMessage;
+import au.com.grieve.geyserlink.message.BaseWrappedMessage;
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
+import lombok.ToString;
 
-public abstract class WrappedResponse extends BaseMessage {
+@SuppressWarnings("unused")
+@Getter
+@ToString
+public abstract class WrappedResponse extends BaseWrappedMessage<GeyserLinkResponse> {
 
     public WrappedResponse() {
         super();
@@ -30,4 +35,5 @@ public abstract class WrappedResponse extends BaseMessage {
     public WrappedResponse(JsonNode node) {
         super(node);
     }
+
 }

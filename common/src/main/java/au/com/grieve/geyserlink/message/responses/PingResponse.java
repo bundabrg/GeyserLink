@@ -18,15 +18,10 @@
 
 package au.com.grieve.geyserlink.message.responses;
 
-import au.com.grieve.geyserlink.message.messages.GeyserLinkMessage;
-import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.ToString;
-
-import java.io.IOException;
-import java.util.Base64;
 
 
 @Getter
@@ -43,10 +38,6 @@ public class PingResponse extends WrappedResponse {
     public PingResponse(JsonNode node) {
         super(node);
         this.data = node.get("data").asText();
-    }
-
-    public PingResponse(GeyserLinkSignedMessage<GeyserLinkMessage> message) throws IOException {
-        this(from(Base64.getDecoder().decode(message.getMessage().getPayload())));
     }
 
     @Override

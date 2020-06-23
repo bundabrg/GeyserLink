@@ -18,10 +18,11 @@
 
 package au.com.grieve.geyserlink.message.messages;
 
-import au.com.grieve.geyserlink.message.BaseMessage;
+import au.com.grieve.geyserlink.message.BaseWrappedMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 
-public abstract class WrappedMessage extends BaseMessage {
+public abstract class WrappedMessage extends BaseWrappedMessage<GeyserLinkMessage> {
+
     public WrappedMessage() {
         super();
     }
@@ -31,6 +32,5 @@ public abstract class WrappedMessage extends BaseMessage {
     }
 
     public abstract String getChannel();
-
     public abstract String getSubChannel();
 }

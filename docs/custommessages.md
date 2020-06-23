@@ -1,0 +1,112 @@
+Whilst we can send raw messages using GeyserLink it is easier to define a Message and Response class that will serialize and
+unserialize the responses.
+
+## Custom Message and Response
+
+Let's create a `PlayerQueryMessage` and `PlayerQueryResponse` that returns the number of players on the server. It is up 
+to you as to which server will respond to this but for this example we will assume the GeyserLink plugin is on a Spigot server 
+and on a Geyser proxy and that either side may send the message to get a response from the other side. 
+
+
+### PlayerQueryMessage
+
+!!! example
+    ```java
+    @Getter
+    @ToString
+    public class PlayerQueryMessage extends WrappedMessage {
+        private final String channel = "myPlugin:command";
+        private final String subChannel = "player-query";
+        
+        public PlayerQueryMessage(String data) {
+            super();
+        }
+    
+        public PlayerQueryMessage(JsonNode node) {
+            super(node);
+        }
+    
+        @Override
+        protected ObjectNode serialize() {
+            return super.serialize();
+        }
+    }
+    ```
+    
+Here we define the channel and subchannel that this message will use. The rest is mainly boilerplate dealing with
+serializing or deserializing the object.
+
+### PlayerQueryResponse
+
+!!! example
+    ```java
+    @Getter
+    @ToString
+    public class PlayerQueryResponse extends WrappedResponse {
+        private int count;
+    
+        public PlayerQueryResponse(int count) {
+            super();
+    
+            this.count = count;
+        }
+    
+        public PlayerQueryResponse(JsonNode node) {
+            super(node);
+            this.count = node.get("count").asInt();
+        }
+    
+        @Override
+        protected ObjectNode serialize() {
+            return super.serialize()
+                    .put("data", data);
+        }
+    }
+    ```
+    
+This one is a bit more interesting as it has a data field `count`. We have to deal with how to deserialize from a JsonNode
+and how to serialize to an ObjectNode.
+
+!!! note
+    Note that the Response does not need to define a channel or subchannel.
+
+### Putting it together
+
+Now you can send a PlayerQueryMessage by doing something like this:
+
+!!! example
+    ```java
+    GeyserLink.getInstance().sendMessage(player, new PlayerQueryMessage())
+        .onResponse(PlayerQueryResponse.class, (result, signed, response) -> {
+            getLogger(String.format("The server has %d players on it", response.getCount()));
+        });
+    ```
+
+## Message Event
+Whichever server is responding to the message will need to register an event listener for the message. The following is a
+simple example for a Spigot server.
+
+!!! example
+    ```java
+    @EventHandler
+    public void onGeyserLinkMessage(GeyserLinkMessageEvent event) {
+        if (!event.getSignedMessage().getMessage().getChannel().equals("myPlugin:command")) {
+            return;
+        }
+        
+        switch(event.getSignedMessage().getMessage().getSubChannel()) {
+            case "player-query":
+                GeyserLink.getInstance().sendResponse(event.getPlayer(), event.getSignedMessage().getMessage(),
+                        new PlayerQueryResponse(plugin.getServer().getOnlinePlayers().size()));
+                break;
+        }
+    }
+    ```
+    
+ ## Serializing and Deserializing
+ 
+ Messages make use of JSON to contain their structure in a packet. This means that when serializing an object
+ it will call the `serialize` method that will add to an ObjectNode any data relevant for the object.
+ 
+ To deserialize a constructor taking a `JsonNode` is used which then pulls from that any relevant fields for
+ the object.

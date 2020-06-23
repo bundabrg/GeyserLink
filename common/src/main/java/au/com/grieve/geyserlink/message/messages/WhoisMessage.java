@@ -18,14 +18,11 @@
 
 package au.com.grieve.geyserlink.message.messages;
 
-import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.ToString;
 
-import java.io.IOException;
-import java.util.Base64;
 import java.util.UUID;
 
 
@@ -46,10 +43,6 @@ public class WhoisMessage extends WrappedMessage {
     public WhoisMessage(JsonNode node) {
         super(node);
         this.uuid = UUID.fromString(node.get("uuid").asText());
-    }
-
-    public WhoisMessage(GeyserLinkSignedMessage<GeyserLinkMessage> message) throws IOException {
-        this(from(Base64.getDecoder().decode(message.getMessage().getPayload())));
     }
 
     @Override

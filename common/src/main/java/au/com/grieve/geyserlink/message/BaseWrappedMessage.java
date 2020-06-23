@@ -16,36 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package au.com.grieve.geyserlink.message.responses;
+package au.com.grieve.geyserlink.message;
 
-import au.com.grieve.geyserlink.EncryptionUtils;
+import au.com.grieve.geyserlink.message.wrappers.EnvelopeMessage;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.ToString;
-
-import java.security.PublicKey;
-import java.util.Base64;
-
 
 @SuppressWarnings("unused")
 @Getter
 @ToString
-public class WhoisResponse extends WrappedResponse {
-    private final PublicKey publicKey;
+public abstract class BaseWrappedMessage<T extends EnvelopeMessage> extends BaseMessage {
 
-    public WhoisResponse(PublicKey publicKey) {
-        this.publicKey = publicKey;
-    }
-
-    public WhoisResponse(JsonNode node) {
+    public BaseWrappedMessage(JsonNode node) {
         super(node);
-        this.publicKey = EncryptionUtils.byteArrayToPublicKey(Base64.getDecoder().decode(node.get("publicKey").asText()));
     }
 
-    @Override
-    protected ObjectNode serialize() {
-        return super.serialize()
-                .put("publicKey", Base64.getEncoder().encodeToString(publicKey.getEncoded()));
+    public BaseWrappedMessage() {
+
     }
 }
