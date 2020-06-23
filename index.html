@@ -208,8 +208,8 @@ additional feature.</p>
 <p>GeyserLink aims to provide an easy method of sending messages between any server involved in a Minecraft connection and to do
 so in such a way as to allow both a trusted setup and an untrusted setup. This could also potentially be a useful way for client side
 mods to implement better communication. It is the TCP/IP of PluginMessages.</p>
-<p>An example configuration could be a Geyser server connected to a Bungeecord server connecting to a Spigot server. If all three servers are
-under the control of the same user then they can be configured to trust each other. However if the Geyser server is instead run by
+<p>An example configuration could be a Geyser proxy connected to a Bungeecord proxy connecting to a Spigot server. If all three servers are
+under the control of the same user then they can be configured to trust each other. If the Geyser proxy is instead run by
 another user (for example someone connecting to a server using their own Proxy) then it will be untrusted but still be able to
 participate in communication where no trust is needed.</p>
 <p>One example is that a trusted proxy could be queried about a players real IP whereas an untrusted one cannot be trusted to provide this and thus
@@ -254,7 +254,7 @@ can be verified by other participants as being valid.</li>
 <p>Send a custom message and retrieve a custom complex response.
 <div class="highlight"><pre><span></span><code><span class="c1">// Will get a response from every participant</span>
 <span class="n">GeyserLink</span><span class="p">.</span><span class="na">getInstance</span><span class="p">().</span><span class="na">sendMessage</span><span class="p">(</span><span class="n">player</span><span class="p">,</span> <span class="k">new</span> <span class="n">GetPlayerProfileMessage</span><span class="p">(</span><span class="s">"bundie"</span><span class="p">))</span>
-    <span class="p">.</span><span class="na">onResponse</span><span class="p">(</span><span class="n">PingResponse</span><span class="p">.</span><span class="na">class</span><span class="p">,</span> <span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">signed</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">{</span>
+    <span class="p">.</span><span class="na">onResponse</span><span class="p">(</span><span class="n">GetPlayerProfileResponse</span><span class="p">.</span><span class="na">class</span><span class="p">,</span> <span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">signed</span><span class="p">,</span> <span class="n">response</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">{</span>
         <span class="c1">// Only accept trusted responses</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">signed</span><span class="p">.</span><span class="na">isTrusted</span><span class="p">())</span> <span class="p">{</span>
             <span class="n">getLogger</span><span class="p">().</span><span class="na">info</span><span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="s">"name:%s, location:%s world:%s"</span><span class="p">,</span>
@@ -267,7 +267,7 @@ can be verified by other participants as being valid.</li>
 <div class="md-source-date">
 <small>
     
-      Last update: <span class="timeago" datetime="1592901386000" locale="en"></span>
+      Last update: <span class="timeago" datetime="1592910175000" locale="en"></span>
 </small>
 </div>
 </article>
