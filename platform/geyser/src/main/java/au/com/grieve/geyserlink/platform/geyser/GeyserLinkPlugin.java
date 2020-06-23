@@ -18,20 +18,14 @@
 
 package au.com.grieve.geyserlink.platform.geyser;
 
-import au.com.grieve.geyserlink.message.messages.PingMessage;
-import au.com.grieve.geyserlink.message.responses.PingResponse;
 import au.com.grieve.geyserlink.platform.geyser.listeners.MessageListener;
-import com.google.common.collect.Iterables;
 import lombok.Getter;
 import org.geysermc.connector.event.annotations.Event;
 import org.geysermc.connector.event.events.PluginEnableEvent;
-import org.geysermc.connector.network.session.GeyserSession;
 import org.geysermc.connector.plugin.GeyserPlugin;
 import org.geysermc.connector.plugin.PluginClassLoader;
 import org.geysermc.connector.plugin.PluginManager;
 import org.geysermc.connector.plugin.annotations.Plugin;
-
-import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unused")
 @Plugin(
@@ -44,8 +38,6 @@ import java.util.concurrent.TimeUnit;
 public class GeyserLinkPlugin extends GeyserPlugin {
     private final GeyserLinkPlatform platform;
 
-    private int upto = 0;
-
     public GeyserLinkPlugin(PluginManager pluginManager, PluginClassLoader pluginClassLoader) {
         super(pluginManager, pluginClassLoader);
 
@@ -57,21 +49,6 @@ public class GeyserLinkPlugin extends GeyserPlugin {
         if (event.getPlugin() == this) {
             // Register Listeners
             registerEvents(new MessageListener(this));
-
-
-            // Test
-            getConnector().getGeneralThreadPool().scheduleAtFixedRate(() -> {
-                GeyserSession session = Iterables.getFirst(getConnector().getPlayers().values(), null);
-
-                if (session == null) {
-                    return;
-                }
-
-                getLogger().warning("Sending ping to player");
-                platform.getGeyserLink().sendMessage(session, new PingMessage("geyser:" + upto++))
-                        .onResponse(PingResponse.class, (result, response, wrapped) -> getLogger().warning("Got a ping response: " + response + " wrapped: " + wrapped));
-
-            }, 5, 5, TimeUnit.SECONDS);
         }
     }
 }

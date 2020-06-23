@@ -18,21 +18,14 @@
 
 package au.com.grieve.geyserlink.platform.spigot;
 
-import au.com.grieve.geyserlink.message.messages.PingMessage;
-import au.com.grieve.geyserlink.message.responses.PingResponse;
 import au.com.grieve.geyserlink.platform.spigot.listeners.MessageListener;
-import com.google.common.collect.Iterables;
 import lombok.Getter;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 
 @Getter
 public final class GeyserLinkPlugin extends JavaPlugin {
     private final GeyserLinkPlatform platform;
-
-    private int upto = 0;
 
     public GeyserLinkPlugin() {
         super();
@@ -43,20 +36,5 @@ public final class GeyserLinkPlugin extends JavaPlugin {
     public void onEnable() {
         // Register Listeners
         getServer().getPluginManager().registerEvents(new MessageListener(this), this);
-
-        // Test
-        getServer().getScheduler().runTaskTimer(this, () -> {
-            Player player = Iterables.getFirst(Bukkit.getOnlinePlayers(), null);
-            if (player == null) {
-                return;
-            }
-
-            getLogger().warning("Sending ping to player");
-
-            platform.getGeyserLink().sendMessage(player, new PingMessage("bungeecord:" + upto++))
-                    .onResponse(PingResponse.class, (result, response, wrapped) -> getLogger().warning("Got a ping response: " + response + " wrapped: " + wrapped));
-
-        }, 5, 5 * 20);
-
     }
 }

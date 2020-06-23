@@ -18,22 +18,13 @@
 
 package au.com.grieve.geyserlink.platform.bungeecord;
 
-import au.com.grieve.geyserlink.GeyserLink;
-import au.com.grieve.geyserlink.message.messages.PingMessage;
-import au.com.grieve.geyserlink.message.responses.PingResponse;
 import au.com.grieve.geyserlink.platform.bungeecord.listeners.MessageListener;
-import com.google.common.collect.Iterables;
 import lombok.Getter;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Plugin;
-
-import java.util.concurrent.TimeUnit;
 
 @Getter
 public class GeyserLinkPlugin extends Plugin {
     private GeyserLinkPlatform platform;
-
-    private int upto = 0;
 
     @Override
     public void onEnable() {
@@ -43,21 +34,6 @@ public class GeyserLinkPlugin extends Plugin {
 
         // Register Listeners
         getProxy().getPluginManager().registerListener(this, new MessageListener(this));
-
-        // Test
-        getProxy().getScheduler().schedule(this, () -> {
-
-            ProxiedPlayer player = Iterables.getFirst(getProxy().getPlayers(), null);
-            if (player == null) {
-                return;
-            }
-
-            getLogger().warning("Sending ping to player");
-
-            GeyserLink.getInstance().sendMessage(player, new PingMessage("bungeecord:" + upto++))
-                    .onResponse(PingResponse.class, (result, response, wrapped) -> getLogger().warning("Got a ping response: " + response + " wrapped: " + wrapped));
-
-        }, 5, 5, TimeUnit.SECONDS);
     }
 
 }
