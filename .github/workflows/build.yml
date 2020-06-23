@@ -39,14 +39,14 @@ jobs:
           # Set Plugin Version
           sed -i "/^version:.*/ s/^version:.*/version: \"${MAVEN_VERSION}\"/" platform/spigot/src/main/resources/plugin.yml
           sed -i "/^version:.*/ s/^version:.*/version: \"${MAVEN_VERSION}\"/" platform/bungeecord/src/main/resources/bungee.yml
-          sed -i "/version = .*/ s/version = \"[^\"]*\"/version = \"${MAVEN_VERSION}\"/" platform/geyser/src/main/java/au/com/grieve/geyserlink/platform/geyser/GeyserLink.java
+          sed -i "/version = .*/ s/version = \"[^\"]*\"/version = \"${MAVEN_VERSION}\"/" platform/geyser/src/main/java/au/com/grieve/geyserlink/platform/geyser/GeyserLinkPlugin.java
 
       - name: Update Version for Developmental Build
         if: "!startsWith(github.ref,'refs/tags/v')"
         run: |
           sed -i "/^version:.*/ s/-dev$/-b${GITHUB_RUN_NUMBER}/" platform/spigot/src/main/resources/plugin.yml
           sed -i "/^version:.*/ s/-dev$/-b${GITHUB_RUN_NUMBER}/" platform/bungeecord/src/main/resources/bungee.yml
-          sed -i "/version = .*/ s/-dev/-b${GITHUB_RUN_NUMBER}/" platform/geyser/src/main/java/au/com/grieve/geyserlink/platform/geyser/GeyserLink.java
+          sed -i "/version = .*/ s/-dev/-b${GITHUB_RUN_NUMBER}/" platform/geyser/src/main/java/au/com/grieve/geyserlink/platform/geyser/GeyserLinkPlugin.java
 
       - name: Build with Maven
         run: |
