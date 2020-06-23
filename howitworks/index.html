@@ -280,7 +280,7 @@ avoid collisions. GeyserLink reserves <code>geyserlink:main</code> as a channel 
     <span class="k">if</span> <span class="p">(</span><span class="n">message</span><span class="p">.</span><span class="na">getChannel</span><span class="p">().</span><span class="na">equals</span><span class="p">(</span><span class="s">"myChannel"</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="n">message</span><span class="p">.</span><span class="na">getSubChannel</span><span class="p">().</span><span class="na">equals</span><span class="p">(</span><span class="s">"mySubChannel"</span><span class="p">))</span> <span class="p">{</span>
         <span class="n">getLogger</span><span class="p">().</span><span class="na">info</span><span class="p">(</span><span class="s">"Got a GeyserLink message with payload: "</span> <span class="o">+</span> <span class="k">new</span> <span class="n">String</span><span class="p">(</span><span class="n">message</span><span class="p">.</span><span class="na">getPayload</span><span class="p">()));</span>
 
-        <span class="n">GeyserLink</span><span class="p">.</span><span class="na">getInstance</span><span class="p">().</span><span class="na">sendResponse</span><span class="p">(</span><span class="n">event</span><span class="p">.</span><span class="na">getPlayer</span><span class="p">(),</span> <span class="n">message</span><span class="p">,</span> <span class="s">"responded"</span><span class="p">);</span>
+        <span class="n">GeyserLink</span><span class="p">.</span><span class="na">getInstance</span><span class="p">().</span><span class="na">sendResponse</span><span class="p">(</span><span class="n">event</span><span class="p">.</span><span class="na">getPlayer</span><span class="p">(),</span> <span class="n">message</span><span class="p">,</span> <span class="s">"responded"</span><span class="p">.</span><span class="na">getBytes</span><span class="p">());</span>
     <span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -315,7 +315,7 @@ file.</p>
 <div class="md-source-date">
 <small>
     
-      Last update: <span class="timeago" datetime="1592900882000" locale="en"></span>
+      Last update: <span class="timeago" datetime="1592911628000" locale="en"></span>
 </small>
 </div>
 </article>

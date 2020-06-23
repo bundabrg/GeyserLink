@@ -308,7 +308,7 @@ serializing or deserializing the object.</p>
     <span class="nd">@Override</span>
     <span class="kd">protected</span> <span class="n">ObjectNode</span> <span class="nf">serialize</span><span class="p">()</span> <span class="p">{</span>
         <span class="k">return</span> <span class="kd">super</span><span class="p">.</span><span class="na">serialize</span><span class="p">()</span>
-                <span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"data"</span><span class="p">,</span> <span class="n">data</span><span class="p">);</span>
+                <span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"count"</span><span class="p">,</span> <span class="n">count</span><span class="p">);</span>
     <span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -317,7 +317,7 @@ serializing or deserializing the object.</p>
 and how to serialize to an ObjectNode.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Note that the Response does not need to define a channel or subchannel.</p>
+<p>The Response does not need to define a channel or subchannel.</p>
 </div>
 <h3 id="putting-it-together">Putting it together<a class="headerlink" href="#putting-it-together" title="Permanent link">¶</a></h3>
 <p>Now you can send a PlayerQueryMessage by doing something like this:</p>
@@ -328,6 +328,13 @@ and how to serialize to an ObjectNode.</p>
         <span class="n">getLogger</span><span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="s">"The server has %d players on it"</span><span class="p">,</span> <span class="n">response</span><span class="p">.</span><span class="na">getCount</span><span class="p">()));</span>
     <span class="p">});</span>
 </code></pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When sending a raw message you only have the fields <code>result</code> and <code>signed</code>. When using a wrapped message you also
+get a field for the message itself. In the above case <code>response</code> will be a <code>PlayerQueryResponse</code> object and will
+be deserialized from the <code>signed</code> object but we still get the <code>signed</code> object as it has data on it that could be
+useful.</p>
 </div>
 <h2 id="message-event">Message Event<a class="headerlink" href="#message-event" title="Permanent link">¶</a></h2>
 <p>Whichever server is responding to the message will need to register an event listener for the message. The following is a
@@ -344,6 +351,24 @@ simple example for a Spigot server.</p>
         <span class="k">case</span> <span class="s">"player-query"</span><span class="p">:</span>
             <span class="n">GeyserLink</span><span class="p">.</span><span class="na">getInstance</span><span class="p">().</span><span class="na">sendResponse</span><span class="p">(</span><span class="n">event</span><span class="p">.</span><span class="na">getPlayer</span><span class="p">(),</span> <span class="n">event</span><span class="p">.</span><span class="na">getSignedMessage</span><span class="p">().</span><span class="na">getMessage</span><span class="p">(),</span>
                     <span class="k">new</span> <span class="n">PlayerQueryResponse</span><span class="p">(</span><span class="n">plugin</span><span class="p">.</span><span class="na">getServer</span><span class="p">().</span><span class="na">getOnlinePlayers</span><span class="p">().</span><span class="na">size</span><span class="p">()));</span>
+            <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<p>For completion sake the following is for the GeyserMC server, note how similar it is.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@Event</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">onGeyserLinkMessage</span><span class="p">(</span><span class="n">GeyserLinkMessageEvent</span> <span class="n">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">event</span><span class="p">.</span><span class="na">getSignedMessage</span><span class="p">().</span><span class="na">getMessage</span><span class="p">().</span><span class="na">getChannel</span><span class="p">().</span><span class="na">equals</span><span class="p">(</span><span class="s">"myPlugin:command"</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">switch</span><span class="p">(</span><span class="n">event</span><span class="p">.</span><span class="na">getSignedMessage</span><span class="p">().</span><span class="na">getMessage</span><span class="p">().</span><span class="na">getSubChannel</span><span class="p">())</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="s">"player-query"</span><span class="p">:</span>
+            <span class="n">GeyserLink</span><span class="p">.</span><span class="na">getInstance</span><span class="p">().</span><span class="na">sendResponse</span><span class="p">(</span><span class="n">event</span><span class="p">.</span><span class="na">getSession</span><span class="p">(),</span> <span class="n">event</span><span class="p">.</span><span class="na">getSignedMessage</span><span class="p">().</span><span class="na">getMessage</span><span class="p">(),</span>
+                    <span class="k">new</span> <span class="n">PlayerQueryResponse</span><span class="p">(</span><span class="n">plugin</span><span class="p">.</span><span class="na">getConnector</span><span class="p">().</span><span class="na">getPlayers</span><span class="p">().</span><span class="na">values</span><span class="p">().</span><span class="na">size</span><span class="p">()));</span>
             <span class="k">break</span><span class="p">;</span>
     <span class="p">}</span>
 <span class="p">}</span>
@@ -394,7 +419,7 @@ by default.</p>
 <div class="md-source-date">
 <small>
     
-      Last update: <span class="timeago" datetime="1592900882000" locale="en"></span>
+      Last update: <span class="timeago" datetime="1592911628000" locale="en"></span>
 </small>
 </div>
 </article>
