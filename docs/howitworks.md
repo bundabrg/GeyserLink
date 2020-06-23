@@ -102,7 +102,7 @@ When sending signed messages GeyserLink will use its private key to sign the mes
 the public key to verify if a signature is valid and if it is a trusted public key.
 
 If GeyserLink receives a message by a sender it does not have the public key for it will send out a WHOIS packet asking the
-sender for their public key and will then add it to its known key list and persist this into the `dyanmic.yml` configuration
+sender for their public key and will then add it to its known key list and persist this into the `dynamic.yml` configuration
 file.
 
-Any key can be made trusted by editing the `dyanmic.yml` file and moving the key into the `trusted` list.
+Any key can be made trusted by editing the `dynamic.yml` file and moving the key into the `trusted` list.
