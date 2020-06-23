@@ -28,8 +28,8 @@ GeyserLink aims to provide an easy method of sending messages between any server
 so in such a way as to allow both a trusted setup and an untrusted setup. This could also potentially be a useful way for client side
 mods to implement better communication. It is the TCP/IP of PluginMessages.
 
-An example configuration could be a Geyser server connected to a Bungeecord server connecting to a Spigot server. If all three servers are
-under the control of the same user then they can be configured to trust each other. However if the Geyser server is instead run by
+An example configuration could be a Geyser proxy connected to a Bungeecord proxy connecting to a Spigot server. If all three servers are
+under the control of the same user then they can be configured to trust each other. Ff the Geyser server is instead run by
 another user (for example someone connecting to a server using their own Proxy) then it will be untrusted but still be able to
 participate in communication where no trust is needed.
 
@@ -77,7 +77,7 @@ Send a custom message and retrieve a custom complex response
 ```java
 // Will get a response from every participant
 GeyserLink.getInstance().sendMessage(player, new GetPlayerProfileMessage("bundie"))
-    .onResponse(PingResponse.class, (result, signed, response) -> {
+    .onResponse(GetPlayerProfileResponse.class, (result, signed, response) -> {
         // Only accept trusted responses
         if (signed.isTrusted()) {
             getLogger().info(String.format("name:%s, location:%s world:%s",
