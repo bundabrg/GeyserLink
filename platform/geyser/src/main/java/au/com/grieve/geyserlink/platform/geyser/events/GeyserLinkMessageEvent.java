@@ -21,16 +21,16 @@ package au.com.grieve.geyserlink.platform.geyser.events;
 import au.com.grieve.geyserlink.GeyserLink;
 import au.com.grieve.geyserlink.message.messages.GeyserLinkMessage;
 import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
-import org.geysermc.connector.event.events.CancellableGeyserEvent;
+import lombok.*;
+import org.geysermc.connector.event.Cancellable;
+import org.geysermc.connector.event.EventSession;
+import org.geysermc.connector.event.GeyserEvent;
 import org.geysermc.connector.network.session.GeyserSession;
 
-@Getter
-@ToString
-@AllArgsConstructor
-public class GeyserLinkMessageEvent extends CancellableGeyserEvent {
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class GeyserLinkMessageEvent extends GeyserEvent implements Cancellable, EventSession {
+    private boolean cancelled;
     private final GeyserLink geyserLink;
     private final GeyserSession session;
     private final GeyserLinkSignedMessage<GeyserLinkMessage> signedMessage;

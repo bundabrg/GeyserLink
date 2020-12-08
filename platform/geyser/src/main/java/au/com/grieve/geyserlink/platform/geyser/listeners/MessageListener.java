@@ -24,8 +24,8 @@ import au.com.grieve.geyserlink.message.wrappers.GeyserLinkSignedMessage;
 import au.com.grieve.geyserlink.platform.geyser.GeyserLinkPlugin;
 import au.com.grieve.geyserlink.platform.geyser.events.GeyserLinkMessageEvent;
 import au.com.grieve.geyserlink.platform.geyser.events.GeyserLinkResponseEvent;
-import org.geysermc.connector.event.annotations.Event;
-import org.geysermc.connector.event.events.PluginMessageEvent;
+import org.geysermc.connector.event.annotations.GeyserEventHandler;
+import org.geysermc.connector.event.events.packet.downstream.ServerPluginMessagePacketReceive;
 
 import java.io.IOException;
 
@@ -40,19 +40,19 @@ public class MessageListener {
         plugin.getConnector().registerPluginChannel("geyserlink:response");
     }
 
-    @Event
-    public void onPluginMessage(PluginMessageEvent event) {
+    @GeyserEventHandler
+    public void onPluginMessage(ServerPluginMessagePacketReceive event) {
         try {
-            switch (event.getChannel()) {
+            switch (event.getPacket().getChannel()) {
                 case "geyserlink:message":
                     plugin.getEventManager().triggerEvent(
                             new GeyserLinkMessageEvent(plugin.getPlatform().getGeyserLink(), event.getSession(),
-                                    new GeyserLinkSignedMessage<>(GeyserLinkSignedMessage.from(event.getData()), GeyserLinkMessage.class)));
+                                    new GeyserLinkSignedMessage<>(GeyserLinkSignedMessage.from(event.getPacket().getData()), GeyserLinkMessage.class)));
                     break;
                 case "geyserlink:response":
                     plugin.getEventManager().triggerEvent(
                             new GeyserLinkResponseEvent(plugin.getPlatform().getGeyserLink(), event.getSession(),
-                                    new GeyserLinkSignedMessage<>(GeyserLinkSignedMessage.from(event.getData()), GeyserLinkResponse.class)));
+                                    new GeyserLinkSignedMessage<>(GeyserLinkSignedMessage.from(event.getPacket().getData()), GeyserLinkResponse.class)));
                     break;
             }
         } catch (IOException ignored) {
@@ -63,7 +63,7 @@ public class MessageListener {
      * GeyserLink provides a "geyserlink:main" channel
      */
     @SuppressWarnings("SwitchStatementWithTooFewBranches")
-    @Event
+    @GeyserEventHandler
     public void onGeyserLinkMessage(GeyserLinkMessageEvent event) {
         if (!event.getSignedMessage().getMessage().getChannel().equals("geyserlink:main")) {
             return;
@@ -78,7 +78,7 @@ public class MessageListener {
     /**
      * Handler responses we are watching for
      */
-    @Event
+    @GeyserEventHandler
     public void onGeyserLinkResponse(GeyserLinkResponseEvent event) {
         event.getGeyserLink().handleResponse(event.getSession(), event.getSignedMessage());
     }

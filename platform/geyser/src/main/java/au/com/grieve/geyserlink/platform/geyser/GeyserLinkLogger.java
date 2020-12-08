@@ -20,12 +20,12 @@ package au.com.grieve.geyserlink.platform.geyser;
 
 import au.com.grieve.geyserlink.IGeyserLinkLogger;
 import lombok.RequiredArgsConstructor;
-import org.geysermc.connector.plugin.PluginLogger;
+import org.geysermc.connector.extension.ExtensionLogger;
 
 
 @RequiredArgsConstructor
 public class GeyserLinkLogger implements IGeyserLinkLogger {
-    private final PluginLogger logger;
+    private final ExtensionLogger logger;
 
     @Override
     public void severe(String message) {

@@ -20,33 +20,33 @@ package au.com.grieve.geyserlink.platform.geyser;
 
 import au.com.grieve.geyserlink.platform.geyser.listeners.MessageListener;
 import lombok.Getter;
-import org.geysermc.connector.event.annotations.Event;
-import org.geysermc.connector.event.events.PluginEnableEvent;
-import org.geysermc.connector.plugin.GeyserPlugin;
-import org.geysermc.connector.plugin.PluginClassLoader;
-import org.geysermc.connector.plugin.PluginManager;
-import org.geysermc.connector.plugin.annotations.Plugin;
+import org.geysermc.connector.event.annotations.GeyserEventHandler;
+import org.geysermc.connector.event.events.extension.ExtensionEnableEvent;
+import org.geysermc.connector.extension.ExtensionClassLoader;
+import org.geysermc.connector.extension.ExtensionManager;
+import org.geysermc.connector.extension.GeyserExtension;
+import org.geysermc.connector.extension.annotations.Extension;
 
 @SuppressWarnings("unused")
-@Plugin(
+@Extension(
         name = "GeyserLink",
         version = "1.1.0-dev",
         authors = {"Bundabrg"},
         description = "The Missing Link"
 )
 @Getter
-public class GeyserLinkPlugin extends GeyserPlugin {
+public class GeyserLinkPlugin extends GeyserExtension {
     private final GeyserLinkPlatform platform;
 
-    public GeyserLinkPlugin(PluginManager pluginManager, PluginClassLoader pluginClassLoader) {
+    public GeyserLinkPlugin(ExtensionManager pluginManager, ExtensionClassLoader pluginClassLoader) {
         super(pluginManager, pluginClassLoader);
 
         platform = new GeyserLinkPlatform(this);
     }
 
-    @Event
-    public void onEnable(PluginEnableEvent event) {
-        if (event.getPlugin() == this) {
+    @GeyserEventHandler
+    public void onEnable(ExtensionEnableEvent event) {
+        if (event.getExtension() == this) {
             // Register Listeners
             registerEvents(new MessageListener(this));
         }
